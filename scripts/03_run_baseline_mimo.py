@@ -189,7 +189,7 @@ def judge_idea(
 
     messages = [{"role": "user", "content": prompt}]
     result = chat_completion(
-        messages, model=model, temperature=0.0, max_tokens=512,
+        messages, model=model, temperature=0.0, max_tokens=4096,
         sleep_seconds=sleep_seconds,
     )
 

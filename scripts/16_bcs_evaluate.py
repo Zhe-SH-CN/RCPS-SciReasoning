@@ -1,8 +1,12 @@
 #!/usr/bin/env python3
 """
-PGCR Phase 4: Evaluate Top-10 selected ideas using the same judge as baseline.
+BCS Evaluate: judge selected ideas against enriched target contributions.
 
-Uses identical judge prompt and protocol as 03_run_baseline_mimo.py.
+Works for both BCS selected ideas and direct-10 rejudge.
+Input: JSONL from 15_bcs_score_select.py or baseline_mimo.json
+Output: JSON with judgments, hits, Hit@10
+
+Uses enriched contributions from eval_neurips_2025_oral_enriched.jsonl.
 """
 
 import json
@@ -79,31 +83,45 @@ def judge_idea(idea: dict, target_title: str, target_contribution: str,
         key_innovation=idea.get("key_innovation", ""),
         addressed_gap=idea.get("addressed_gap", ""),
     )
-
     messages = [{"role": "user", "content": prompt}]
     result = chat_completion(
         messages, model=model, temperature=0.0, max_tokens=4096,
         sleep_seconds=sleep_seconds,
     )
-
     parsed = parse_json_from_response(result["content"])
     judgment = {"match": False, "confidence": 0.0, "reason": result["content"][:300]}
     if isinstance(parsed, dict):
         judgment["match"] = bool(parsed.get("match", False))
         judgment["confidence"] = float(parsed.get("confidence", 0.0))
         judgment["reason"] = parsed.get("reason", "")
-
     judgment["input_tokens"] = result.get("input_tokens")
     judgment["output_tokens"] = result.get("output_tokens")
     return judgment
 
 
+def load_ideas_from_baseline(baseline_path: Path) -> list[dict]:
+    """Load ideas from baseline_mimo.json for direct-10 rejudge."""
+    with open(baseline_path) as f:
+        data = json.load(f)
+    records = []
+    for t in data["targets"]:
+        ideas = t.get("generated_ideas", [])
+        records.append({
+            "target_id": t["target_id"],
+            "target_title": t.get("target_title", ""),
+            "selected": ideas[:10],
+            "total_candidates": len(ideas),
+        })
+    return records
+
+
 def main():
-    parser = argparse.ArgumentParser(description="Evaluate PGCR Top-10")
-    parser.add_argument("--input", default=str(PROJECT_ROOT / "results" / "pgcr_top10.jsonl"))
-    parser.add_argument("--output", default=str(PROJECT_ROOT / "results" / "pgcr_full.json"))
-    parser.add_argument("--eval-data", default=str(PROJECT_ROOT / "data" / "scireasoning" / "eval_neurips_2025_oral.jsonl"))
+    parser = argparse.ArgumentParser(description="BCS evaluate / direct-10 rejudge")
+    parser.add_argument("--input", required=True, help="Selected JSONL or baseline_mimo.json")
+    parser.add_argument("--output", required=True, help="Output eval JSON")
+    parser.add_argument("--eval-data", default=str(PROJECT_ROOT / "data" / "scireasoning" / "eval_neurips_2025_oral_enriched.jsonl"))
     parser.add_argument("--judge-model", default="mimo-v2.5-pro")
+    parser.add_argument("--method-name", default="bcs50")
     parser.add_argument("--resume", action="store_true")
     parser.add_argument("--sleep-seconds", type=float, default=0.5)
     args = parser.parse_args()
@@ -111,7 +129,7 @@ def main():
     output_path = Path(args.output)
     output_path.parent.mkdir(parents=True, exist_ok=True)
 
-    # Load eval data for target titles/contributions
+    # Load enriched eval data
     eval_data = {}
     with open(args.eval_data) as f:
         for line in f:
@@ -119,38 +137,39 @@ def main():
                 rec = json.loads(line)
                 eval_data[rec["target_id"]] = rec
 
-    # Load PGCR top-10
-    records = []
-    with open(args.input) as f:
-        for line in f:
-            if line.strip():
-                records.append(json.loads(line))
+    # Load ideas
+    input_path = Path(args.input)
+    if input_path.name == "baseline_mimo.json":
+        records = load_ideas_from_baseline(input_path)
+    else:
+        records = []
+        with open(input_path) as f:
+            for line in f:
+                if line.strip():
+                    records.append(json.loads(line))
     print(f"Loaded {len(records)} targets")
 
     # Resume
     completed_ids = set()
     results = []
+    total_hits = 0
+    total_tokens = 0
     if args.resume and output_path.exists():
         with open(output_path) as f:
             existing = json.load(f)
         results = existing.get("targets", [])
         completed_ids = {r["target_id"] for r in results}
-        print(f"Resuming: {len(completed_ids)} already completed")
-
-    remaining = [r for r in records if r["target_id"] not in completed_ids]
-    print(f"Processing {len(remaining)} remaining targets")
-
-    # Recompute stats from loaded results when resuming
-    total_hits = 0
-    total_tokens = 0
-    if args.resume and results:
         for r in results:
             if r.get("hit"):
                 total_hits += 1
             for j in r.get("judgments", []):
                 total_tokens += (j.get("input_tokens") or 0) + (j.get("output_tokens") or 0)
-        print(f"Resume stats: {total_hits} hits, {total_tokens} total tokens")
+        print(f"Resuming: {len(completed_ids)} completed, {total_hits} hits")
 
+    remaining = [r for r in records if r["target_id"] not in completed_ids]
+    print(f"Processing {len(remaining)} remaining targets")
+
+    failures = []
     for idx, record in enumerate(remaining):
         target_id = record["target_id"]
         eval_rec = eval_data.get(target_id, {})
@@ -158,11 +177,10 @@ def main():
         target_contribution = eval_rec.get("contribution", target_title)
         selected = record.get("selected", [])
 
-        print(f"\n[{idx+1}/{len(remaining)}] {target_title[:60]}... ({len(selected)} ideas)")
+        print(f"\n[{idx+1}/{len(remaining)}] {target_title[:50]}... ({len(selected)} ideas)")
 
         judgments = []
         hit = False
-
         for idea_idx, idea in enumerate(selected):
             try:
                 judgment = judge_idea(
@@ -199,11 +217,11 @@ def main():
         else:
             print(f"  MISS")
 
-        # Log token usage
-        target_in = sum(j.get("input_tokens", 0) for j in judgments if j.get("input_tokens"))
-        target_out = sum(j.get("output_tokens", 0) for j in judgments if j.get("output_tokens"))
+        # Log
+        target_in = sum(j.get("input_tokens", 0) or 0 for j in judgments)
+        target_out = sum(j.get("output_tokens", 0) or 0 for j in judgments)
         log_target_completion(
-            run_name="pgcr_evaluation",
+            run_name=f"{args.method_name}_evaluation",
             target_id=target_id,
             stage="evaluation",
             num_api_calls=len(judgments),
@@ -230,8 +248,9 @@ def main():
         completed = len(results)
         checkpoint = {
             "run_id": datetime.now().strftime("%Y%m%d_%H%M%S"),
-            "method": "pgcr_full",
+            "method": args.method_name,
             "judge_model": args.judge_model,
+            "eval_data": str(args.eval_data),
             "total_targets": len(records),
             "completed": completed,
             "hits": total_hits,
@@ -246,12 +265,11 @@ def main():
     completed = len(results)
     hit_rate = round(total_hits / max(completed, 1) * 100, 1)
     print(f"\n{'='*50}")
-    print(f"PGCR Results:")
+    print(f"{args.method_name} Results:")
     print(f"  Completed: {completed}/{len(records)}")
     print(f"  Hits: {total_hits}")
     print(f"  Hit@10: {hit_rate}%")
     print(f"  Total tokens: {total_tokens:,}")
-    print(f"  Output: {output_path}")
 
 
 if __name__ == "__main__":
