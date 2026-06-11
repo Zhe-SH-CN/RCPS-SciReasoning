@@ -253,11 +253,22 @@ def main():
     remaining = [r for r in records if r["target_id"] not in completed_ids]
     print(f"Processing {len(remaining)} remaining targets")
 
-    # Stats
+    # Stats - recompute from loaded results when resuming
     total_input_tokens = 0
     total_output_tokens = 0
     total_hits = 0
     failures = []
+    if args.resume and results:
+        for r in results:
+            if r.get("hit"):
+                total_hits += 1
+            gen = r.get("generation", {})
+            total_input_tokens += gen.get("input_tokens") or 0
+            total_output_tokens += gen.get("output_tokens") or 0
+            for j in r.get("judgments", []):
+                total_input_tokens += j.get("input_tokens") or 0
+                total_output_tokens += j.get("output_tokens") or 0
+        print(f"Resume stats: {total_hits} hits, {total_input_tokens} in-tokens, {total_output_tokens} out-tokens")
 
     for idx, record in enumerate(remaining):
         target_id = record["target_id"]
