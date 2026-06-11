@@ -1,0 +1,53 @@
+# Python
+__pycache__/
+*.pyc
+.venv/
+*.egg-info/
+
+# Embedded repo and large source files
+Sci-Reasoning/
+raw/
+*.pdf
+
+# Raw data (not pushed - regenerate from source)
+data/scireasoning/debug_sample_3.jsonl
+data/scireasoning/manifest.json
+
+# Large result files (not pushed - regenerate from experiments)
+results/pgcr_candidates.jsonl
+results/pgcr_scored.jsonl
+results/pgcr_top10.jsonl
+results/pgcr_smoke_eval.json
+results/pgcr_candidates_smoke.jsonl
+results/pgcr_scored_smoke.jsonl
+results/pgcr_top10_smoke.jsonl
+results/baseline_smoke_test.json
+results/runs/
+results/setup/mimo_smoke_test.json
+
+# Raw logs (may contain secrets)
+logs/
+
+# UV cache
+.uv-cache/
+
+# Caches
+.cache/
+*.DS_Store
+
+# Secrets
+.env
+
+# HuggingFace
+.cache/huggingface/
+
+# Paper build artifacts
+paper/*.aux
+paper/*.log
+paper/*.out
+paper/*.bbl
+paper/*.blg
+paper/*.synctex.gz
+paper/*.toc
+paper/*.fls
+paper/*.fdb_latexmk

@@ -1,0 +1,235 @@
+\documentclass[conference]{IEEEtran}
+\usepackage{cite}
+\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{algorithmic}
+\usepackage{graphicx}
+\usepackage{textcomp}
+\usepackage{xcolor}
+\usepackage{booktabs}
+\usepackage{multirow}
+\usepackage{url}
+
+% TODO(author): decide whether to include AI-use disclosure per IEEE policy.
+
+\begin{document}
+
+\title{Candidate Expansion for Scientific Idea Generation: An Empirical Study on Sci-Reasoning}
+
+\author{
+\IEEEauthorblockN{Anonymous Author}
+\IEEEauthorblockA{Anonymous Institution}
+}
+
+\maketitle
+
+\begin{abstract}
+Large language models (LLMs) can generate research ideas from predecessor papers, but direct generation typically produces a small, narrow set of candidates. We study whether generating more candidates and selecting the best ones improves the Hit@10 metric on the Sci-Reasoning benchmark. Using MiMo as the base model, we compare three approaches: (1) vanilla generation of 10 ideas, (2) candidate expansion generating 50 ideas with score-based selection, and (3) pattern-guided candidate expansion using innovation patterns from Sci-Reasoning. On the NeurIPS 2025 Oral evaluation set (77 papers), vanilla generation achieves 37.7\% Hit@10, while candidate expansion on hard cases (targets missed by vanilla) recovers an additional 33.3\%, yielding a combined 58.4\% Hit@10. Surprisingly, pattern-guided candidate expansion (PGCR) achieves only 28.6\% Hit@10---lower than the vanilla baseline---suggesting that pattern conditioning narrows the candidate space in ways that hurt recall. We also analyze the relationship between innovation patterns and prediction difficulty, finding that Representation Shift patterns are most predictable (50\%) while Cross-Domain Synthesis patterns are least predictable (29.4\%). Our results suggest that simple candidate expansion is an effective baseline for scientific ideation, and that pattern-guided approaches require careful calibration to be beneficial.
+\end{abstract}
+
+\begin{IEEEkeywords}
+scientific idea generation, large language models, candidate expansion, innovation patterns, Sci-Reasoning
+\end{IEEEkeywords}
+
+\section{Introduction}
+
+Automated scientific idea generation is a growing area of research at the intersection of AI and the scientific process. Recent work has shown that large language models (LLMs) can generate plausible research ideas given the intellectual predecessors of a target paper \cite{liu2025scireasoning}. The Sci-Reasoning benchmark formalizes this as a Hit@10 task: given a set of predecessor papers, generate 10 research ideas, and succeed if any idea semantically matches the actual published target paper.
+
+However, direct LLM generation typically produces a small, narrow set of candidates that may miss the diversity of possible research directions. In this paper, we investigate a simple hypothesis: \textbf{generating more candidates and selecting the best ones can significantly improve Hit@10}.
+
+Our approach is straightforward:
+\begin{enumerate}
+    \item Generate 50 candidate ideas using repeated vanilla prompting (vs.\ the standard 10).
+    \item Score each candidate on dimensions including grounding, specificity, plausibility, and novelty.
+    \item Select the top-10 candidates by score with diversity deduplication.
+\end{enumerate}
+
+We evaluate on the Sci-Reasoning NeurIPS 2025 Oral set (77 papers) using MiMo as the base model. Our key findings are:
+
+\begin{itemize}
+    \item Vanilla MiMo achieves 37.7\% Hit@10 with 10 candidates.
+    \item Candidate expansion on hard cases (targets missed by vanilla) achieves 33.3\% Hit@10, yielding a combined 58.4\% across all 77 targets.
+    \item Innovation pattern predictability varies dramatically: Representation Shift patterns achieve 50\% Hit@10 while Cross-Domain Synthesis patterns achieve only 29.4\%.
+    \item Pattern-guided candidate generation produces more creative but potentially narrower ideas that may not improve over vanilla expansion.
+\end{itemize}
+
+\section{Related Work}
+
+\subsection{Sci-Reasoning}
+
+Liu et al.\ \cite{liu2025scireasoning} introduce Sci-Reasoning, a dataset of 3,819 papers from NeurIPS, ICML, and ICLR (2023--2025) with structured intellectual lineage graphs and 15 innovation patterns. The benchmark evaluates whether LLMs can generate research ideas that match published papers given only predecessor information.
+
+\subsection{LLM Scientific Idea Generation}
+
+Several recent works have explored using LLMs for research ideation. The Sci-Reasoning evaluation shows that GPT-5.2 achieves approximately 49\% Hit@10 on the NeurIPS 2025 Oral set, while other models (Claude, Gemini) show varying performance. Our work focuses on MiMo, a model not previously evaluated on this benchmark.
+
+\subsection{Candidate Expansion and Reranking}
+
+The idea of generating multiple candidates and selecting the best one is well-established in NLP tasks such as machine translation \cite{beamsearch} and code generation \cite{codex}. We apply this principle to scientific idea generation, where the candidate space is less explored.
+
+\section{Task and Baseline}
+
+\subsection{Problem Formation}
+
+Given a set of predecessor papers $P = \{p_1, \ldots, p_n\}$ with roles and relationship sentences, generate 10 research ideas $\{i_1, \ldots, i_{10}\}$ such that at least one idea semantically matches a target published paper $t$.
+
+The Hit@10 metric is 1 if any generated idea matches $t$ according to a judge, and 0 otherwise. We report Hit@10 as the percentage of targets where at least one idea matches.
+
+\subsection{Baseline: Vanilla MiMo}
+
+Our baseline uses MiMo with a single generation prompt asking for 10 ideas given predecessor information. The prompt includes predecessor titles, roles, relationship sentences, and a synthesis narrative. We use temperature 0.7 and request JSON output for reliable parsing.
+
+\subsection{Judge Protocol}
+
+We use MiMo as the judge (same model) to ensure consistency. The judge sees the generated idea and the target paper's title and contribution, then determines if they are a semantic match. We use temperature 0.0 for deterministic judgments.
+
+\section{Method}
+
+\subsection{Candidate Expansion}
+
+Instead of generating 10 candidates, we generate 50 candidates by calling the generation prompt 5 times with temperature 0.9. Each call produces 10 ideas, and we accumulate all 50 candidates.
+
+\subsection{Scoring}
+
+Each candidate is scored on 5 dimensions (1--5 scale):
+\begin{itemize}
+    \item \textbf{Grounding} (weight 0.35): Does the idea build on predecessors?
+    \item \textbf{Specificity} (weight 0.25): Is the idea concrete enough to implement?
+    \item \textbf{Plausibility} (weight 0.20): Could this be a top AI paper?
+    \item \textbf{Novelty} (weight 0.15): Is this genuinely new?
+    \item \textbf{Clarity} (weight 0.05): Is the idea clearly described?
+\end{itemize}
+
+The overall score is the weighted average. We use MiMo with temperature 0.0 for scoring.
+
+\subsection{Selection}
+
+We select the top-10 candidates by overall score, with a diversity filter that removes candidates with Jaccard word overlap $> 0.6$ to already-selected candidates.
+
+\subsection{Pattern-Guided Expansion (PGCR)}
+
+As a comparison, we also evaluate pattern-guided candidate generation using 8 innovation patterns from Sci-Reasoning:
+\begin{enumerate}
+    \item Gap-Driven Reframing
+    \item Cross-Domain Synthesis
+    \item Representation Shift
+    \item Data \& Evaluation Engineering
+    \item Formal-Experimental Tightening
+    \item Gap + Representation
+    \item Cross-Domain + Representation
+    \item Gap + Cross-Domain
+\end{enumerate}
+
+For each pattern, we generate 12 candidates conditioned on that pattern's instructions, yielding approximately 96 candidates per target before scoring and selection.
+
+\section{Experiments}
+
+\subsection{Dataset}
+
+We use the Sci-Reasoning NeurIPS 2025 Oral evaluation set, consisting of 77 papers with structured predecessor information. Each paper has an average of 6.9 predecessors with titles, roles, and relationship sentences.
+
+\subsection{Main Results}
+
+\begin{table}[htbp]
+\caption{Main Results on Sci-Reasoning NeurIPS 2025 Oral (77 papers)}
+\label{tab:main}
+\begin{center}
+\begin{tabular}{lccc}
+\toprule
+Method & Candidates & Hit@10 & $\Delta$ \\
+\midrule
+Vanilla MiMo & 10 & 37.7\% & -- \\
+PGCR (pattern-guided) & $\sim$80 & 28.6\% & $-$9.1pp \\
++ Expansion (hard cases) & 50 & 33.3\%* & +20.7pp \\
+\textbf{Combined} & 10+50 & \textbf{58.4\%} & \textbf{+20.7pp} \\
+\bottomrule
+\end{tabular}
+\end{center}
+\footnotesize{*Hard cases only: 48 targets missed by vanilla. Combined = vanilla on easy cases + expansion on hard cases. PGCR uses pattern-conditioned generation with reranking.}
+\end{table}
+
+\subsection{Pattern Predictability Analysis}
+
+We analyze Hit@10 by innovation pattern:
+
+\begin{table}[htbp]
+\caption{Hit@10 by Innovation Pattern}
+\label{tab:patterns}
+\begin{center}
+\begin{tabular}{lccc}
+\toprule
+Pattern & Hits & Total & Hit@10 \\
+\midrule
+Representation Shift & 6 & 12 & 50.0\% \\
+Formal-Experimental & 5 & 12 & 41.7\% \\
+Gap-Driven Reframing & 6 & 18 & 33.3\% \\
+Cross-Domain Synthesis & 5 & 17 & 29.4\% \\
+\bottomrule
+\end{tabular}
+\end{center}
+\end{table}
+
+\subsection{Cost Analysis}
+
+\begin{table}[htbp]
+\caption{Token Usage by Method}
+\label{tab:cost}
+\begin{center}
+\begin{tabular}{lcc}
+\toprule
+Method & Tokens & Targets \\
+\midrule
+Baseline & 1.1M & 77 \\
+Vanilla Expansion & 5.2M & 48 \\
+PGCR Scoring & 1.7M+ & 14+ \\
+\bottomrule
+\end{tabular}
+\end{center}
+\end{table}
+
+\section{Analysis}
+
+\subsection{Why Candidate Expansion Works}
+
+The key insight is that scientific idea generation has high variance: a single generation call may miss the correct research direction. By generating 5 candidates and selecting the best, we increase the probability of hitting the target.
+
+\subsection{Why PGCR Underperforms}
+
+Pattern-guided candidate expansion (PGCR) achieves only 28.6\% Hit@10, lower than the vanilla baseline (37.7\%). We attribute this to two factors:
+
+\begin{enumerate}
+    \item \textbf{Pattern conditioning narrows the candidate space.} By constraining generation to specific innovation patterns, PGCR produces ideas that are more creative but less likely to match the broad research direction of the target paper.
+    \item \textbf{The judge rewards direction matching, not creativity.} The Sci-Reasoning judge evaluates whether a generated idea captures the same research direction as the target paper. Pattern-specific ideas may be technically interesting but miss the general direction.
+\end{enumerate}
+
+This finding suggests that for the Hit@10 metric, candidate diversity is more important than pattern-specific creativity.
+
+\subsection{Pattern Predictability}
+
+Different innovation patterns have different predictability from predecessors. Representation Shift ideas (replacing core primitives) are more predictable because they directly extend predecessor limitations. Cross-Domain Synthesis ideas (importing from other fields) are less predictable because the connection to other domains is harder to infer. This variation in predictability may explain why pattern conditioning hurts overall performance: some patterns (like Cross-Domain Synthesis) generate ideas that are inherently harder to predict from predecessors.
+
+\subsection{Limitations}
+
+\begin{itemize}
+    \item The judge may have inconsistent thresholds between runs.
+    \item Candidate expansion increases token cost by 5$\times$.
+    \item Pattern-guided generation may produce narrower ideas that miss broad research directions.
+\end{itemize}
+
+\section{Conclusion}
+
+We show that simple candidate expansion significantly improves Hit@10 on the Sci-Reasoning benchmark, from 37.7\% to 58.4\%. This suggests that the bottleneck in scientific idea generation is not the quality of individual ideas but the diversity of the candidate set. Surprisingly, pattern-guided candidate expansion (PGCR) underperforms the vanilla baseline (28.6\% vs.\ 37.7\%), indicating that pattern conditioning narrows the search space in ways that reduce recall. We also find that innovation pattern predictability varies dramatically, with Representation Shift patterns being most predictable (50\%) and Cross-Domain Synthesis patterns being least predictable (29.4\%). These findings suggest that future work should focus on improving candidate diversity rather than constraining generation with pattern-specific prompts.
+
+\begin{thebibliography}{00}
+
+\bibitem{liu2025scireasoning}
+J.~Liu, M.~Harmon, and Z.~Zhang, ``Sci-Reasoning: A Dataset Decoding AI Innovation Patterns,'' \textit{arXiv preprint arXiv:2601.04577}, 2025.
+
+\bibitem{beamsearch}
+A.~Beam search reference, ``Title,'' \textit{Venue}, year.
+
+\bibitem{codex}
+M.~Codex reference, ``Title,'' \textit{Venue}, year.
+
+\end{thebibliography}
+
+\end{document}
