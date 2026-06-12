@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Minimal MiMo API client for the ICTAI project.
+Minimal MiMo API client for the ACML project.
 
 Reads credentials from environment variables:
   XIAOMI_MIMO_BASE_URL, XIAOMI_MIMO_API_KEY, MIMO_MODEL, MIMO_SLEEP_SECONDS
@@ -9,6 +9,7 @@ Features:
 - OpenAI-compatible chat/completions
 - Sleep between calls (default 0.5s)
 - Retry with backoff on 429/rate-limit
+- Per-call timeout via threading (prevents hung connections)
 - Token usage logging
 - Never prints API keys
 """
@@ -18,6 +19,7 @@ import time
 import json
 import logging
 from typing import Optional
+from concurrent.futures import ThreadPoolExecutor, TimeoutError as FuturesTimeout
 
 try:
     from openai import OpenAI
@@ -32,6 +34,8 @@ except ImportError:
 
 logger = logging.getLogger("mimo_client")
 
+CALL_TIMEOUT = 300  # seconds per API call
+
 
 def get_client() -> "OpenAI":
     """Create an OpenAI client configured for MiMo."""
@@ -41,7 +45,7 @@ def get_client() -> "OpenAI":
         raise RuntimeError(
             "Set XIAOMI_MIMO_BASE_URL and XIAOMI_MIMO_API_KEY in .env or environment"
         )
-    return OpenAI(base_url=base_url, api_key=api_key)
+    return OpenAI(base_url=base_url, api_key=api_key, timeout=120.0)
 
 
 def get_model() -> str:
@@ -69,15 +73,22 @@ def chat_completion(
     model = model or get_model()
     sleep_sec = sleep_seconds if sleep_seconds is not None else get_sleep_seconds()
 
+    def _do_call():
+        """Actual API call (runs in thread for timeout)."""
+        return client.chat.completions.create(
+            model=model,
+            messages=messages,
+            temperature=temperature,
+            max_tokens=max_tokens,
+        )
+
     for attempt in range(max_retries):
         try:
             t0 = time.time()
-            response = client.chat.completions.create(
-                model=model,
-                messages=messages,
-                temperature=temperature,
-                max_tokens=max_tokens,
-            )
+            # Use thread-based timeout to prevent hung connections
+            with ThreadPoolExecutor(max_workers=1) as executor:
+                future = executor.submit(_do_call)
+                response = future.result(timeout=CALL_TIMEOUT)
             elapsed = time.time() - t0
 
             choice = response.choices[0]
@@ -104,6 +115,14 @@ def chat_completion(
             # Sleep after successful call
             time.sleep(sleep_sec)
             return result
+
+        except (FuturesTimeout, TimeoutError) as e:
+            logger.warning("API timeout (attempt %d/%d), waited %ds: %s",
+                           attempt + 1, max_retries, CALL_TIMEOUT, e)
+            if attempt < max_retries - 1:
+                time.sleep(2)
+                continue
+            raise RuntimeError(f"API timed out after {max_retries} attempts")
 
         except Exception as e:
             err_str = str(e).lower()

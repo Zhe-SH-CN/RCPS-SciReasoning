@@ -161,7 +161,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--input", required=True, help="Vanilla expansion JSONL")
     parser.add_argument("--output", required=True, help="Output top-10 JSONL")
-    parser.add_argument("--eval-data", default=str(PROJECT_ROOT / "data" / "scireasoning" / "eval_neurips_2025_oral.jsonl"))
+    parser.add_argument("--eval-data", default=str(PROJECT_ROOT / "data" / "scireasoning" / "eval_neurips_2025_oral_enriched.jsonl"))
     parser.add_argument("--model", default="mimo-v2.5-pro")
     parser.add_argument("--resume", action="store_true")
     parser.add_argument("--sleep-seconds", type=float, default=0.5)

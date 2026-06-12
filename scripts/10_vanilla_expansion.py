@@ -121,7 +121,7 @@ def generate_batch(record: dict, model: str, sleep_seconds: float) -> tuple[list
 
 def main():
     parser = argparse.ArgumentParser(description="Vanilla expansion baseline")
-    parser.add_argument("--input", default=str(PROJECT_ROOT / "data" / "scireasoning" / "eval_neurips_2025_oral.jsonl"))
+    parser.add_argument("--input", default=str(PROJECT_ROOT / "data" / "scireasoning" / "eval_neurips_2025_oral_enriched.jsonl"))
     parser.add_argument("--output", default=str(PROJECT_ROOT / "results" / "vanilla_expansion.jsonl"))
     parser.add_argument("--model", default="mimo-v2.5-pro")
     parser.add_argument("--batches", type=int, default=5, help="Number of 10-idea batches (5=50 candidates)")
