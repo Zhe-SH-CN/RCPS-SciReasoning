@@ -1,423 +1,372 @@
 #!/usr/bin/env python3
-"""
-ACML Results Audit: Robust summarizer for experiment result files.
+"""ACML Results Audit: read JSON/JSONL result files and produce a structured audit.
 
-Reads JSON/JSONL result files directly and computes:
-  - hits / total / Hit@10
-  - overlaps between baseline, PGCR, and expansion
-  - full-set vs hard-case-only warnings
-  - oracle-result warnings
-  - token totals from result files
-  - candidate count distribution
-  - judge confidence summary
-  - missing metadata warnings
-  - bootstrap confidence intervals
-
-Outputs:
+Creates:
   - results/acml_results_audit.json
   - results/acml_results_audit.md
 
-Does NOT rely on markdown summaries as ground truth.
+Computes:
+  - hits / total / Hit@10 per method
+  - overlaps between methods
+  - full-set vs hard-case-only warnings
+  - oracle-result warnings
+  - token totals
+  - candidate count distribution
+  - judge confidence summary
+  - missing metadata warnings
+  - bootstrap 95% CI for Hit@10
 """
 
 import json
 import math
-import os
-import random
 import sys
 from collections import Counter
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
+RESULTS_DIR = PROJECT_ROOT / "results"
+LOGS_DIR = PROJECT_ROOT / "logs"
+
+# Result files to audit
+RESULT_FILES = {
+    "baseline": RESULTS_DIR / "baseline_mimo.json",
+    "pgcr": RESULTS_DIR / "pgcr_full.json",
+    "vanilla_expansion": RESULTS_DIR / "vanilla_expansion_eval.json",
+}
 
 
-def load_json(path: Path) -> dict:
+def load_result(path: Path) -> dict | None:
+    if not path.exists():
+        return None
     with open(path) as f:
         return json.load(f)
 
 
 def bootstrap_ci(hits: int, total: int, n_boot: int = 10000, seed: int = 42) -> dict:
-    """Bootstrap 95% CI for a proportion."""
+    """Bootstrap 95% CI for a proportion using deterministic resampling."""
     if total == 0:
-        return {"low": 0.0, "high": 0.0, "mean": 0.0}
+        return {"low": 0.0, "high": 0.0, "point": 0.0}
+    import random
     rng = random.Random(seed)
-    p_hat = hits / total
+    p = hits / total
     samples = []
     for _ in range(n_boot):
-        # Binomial bootstrap
-        h = sum(1 for _ in range(total) if rng.random() < p_hat)
+        h = sum(1 for _ in range(total) if rng.random() < p)
         samples.append(h / total)
     samples.sort()
-    low = samples[int(0.025 * n_boot)]
-    high = samples[int(0.975 * n_boot)]
-    return {"low": round(low * 100, 1), "high": round(high * 100, 1), "mean": round(p_hat * 100, 1)}
+    lo = samples[int(0.025 * n_boot)]
+    hi = samples[int(0.975 * n_boot)]
+    return {"low": round(lo * 100, 1), "high": round(hi * 100, 1), "point": round(p * 100, 1)}
 
 
-def analyze_method(data: dict, method_name: str, is_hard_case_only: bool = False) -> dict:
-    """Analyze a single result file."""
-    targets = data.get("targets", [])
-    total = len(targets)
-    hits = sum(1 for t in targets if t.get("hit"))
-    hit_at_10 = round(hits / max(total, 1) * 100, 1)
-    ci = bootstrap_ci(hits, total)
-
-    hit_ids = {t["target_id"] for t in targets if t.get("hit")}
-    all_ids = {t["target_id"] for t in targets}
-
-    # Token accounting
-    total_input_tokens = data.get("total_input_tokens", 0)
-    total_output_tokens = data.get("total_output_tokens", 0)
-    total_tokens_field = data.get("total_tokens", 0)
-    # Recount from targets if top-level is missing
-    if not total_input_tokens and not total_tokens_field:
-        for t in targets:
-            gen = t.get("generation", {})
-            total_input_tokens += gen.get("input_tokens", 0) or 0
-            total_output_tokens += gen.get("output_tokens", 0) or 0
-            for j in t.get("judgments", []):
-                total_input_tokens += j.get("input_tokens", 0) or 0
-                total_output_tokens += j.get("output_tokens", 0) or 0
-
-    # Candidate count distribution
-    candidate_counts = []
+def candidate_count_distribution(targets: list[dict], method: str) -> dict:
+    """Distribution of candidate counts per target."""
+    counts = []
     for t in targets:
-        nc = t.get("num_candidates")
-        if nc is not None:
-            candidate_counts.append(nc)
-        elif "generated_ideas" in t:
-            candidate_counts.append(len(t["generated_ideas"]))
+        if method == "baseline":
+            counts.append(len(t.get("generated_ideas", [])))
+        elif method == "pgcr":
+            counts.append(t.get("num_candidates", len(t.get("selected_ideas", []))))
+        elif method == "vanilla_expansion":
+            counts.append(t.get("num_candidates", len(t.get("selected_ideas", []))))
+    if not counts:
+        return {}
+    c = Counter(counts)
+    return {
+        "min": min(counts),
+        "max": max(counts),
+        "mean": round(sum(counts) / len(counts), 1),
+        "distribution": dict(sorted(c.items())),
+    }
 
-    # Judge confidence for matched ideas
-    match_confs = []
-    all_confs = []
+
+def judge_confidence_summary(targets: list[dict]) -> dict:
+    """Summary of judge confidence scores across all judgments."""
+    confidences = []
     for t in targets:
         for j in t.get("judgments", []):
-            conf = j.get("confidence", 0)
-            all_confs.append(conf)
-            if j.get("match"):
-                match_confs.append(conf)
-
-    # Metadata checks
-    warnings = []
-    model = data.get("model") or data.get("judge_model", "")
-    if not model:
-        warnings.append("missing model field")
-    if is_hard_case_only:
-        warnings.append("evaluated on baseline-miss subset only (not full-set)")
-    if "pgcr_full" in method_name.lower() and data.get("method") == "pgcr_full":
-        pass  # expected
-    elif data.get("method", "") != method_name and method_name != "baseline":
-        warnings.append(f'method field says "{data.get("method")}" but analyzed as "{method_name}"')
-
-    result = {
-        "method": method_name,
-        "model": model,
-        "total_targets": data.get("total_targets", total),
-        "completed": total,
-        "hits": hits,
-        "hit_at_10": hit_at_10,
-        "ci_95": ci,
-        "hit_ids": sorted(hit_ids),
-        "all_ids": sorted(all_ids),
-        "is_hard_case_only": is_hard_case_only,
-        "tokens": {
-            "input": total_input_tokens,
-            "output": total_output_tokens,
-            "from_field": total_tokens_field,
-        },
-        "warnings": warnings,
-    }
-
-    if candidate_counts:
-        result["candidate_counts"] = {
-            "n": len(candidate_counts),
-            "min": min(candidate_counts),
-            "max": max(candidate_counts),
-            "mean": round(sum(candidate_counts) / len(candidate_counts), 1),
-        }
-
-    if all_confs:
-        result["confidence"] = {
-            "all_ideas": {
-                "n": len(all_confs),
-                "mean": round(sum(all_confs) / len(all_confs), 2),
-            },
-        }
-    if match_confs:
-        result["confidence"]["matched_ideas"] = {
-            "n": len(match_confs),
-            "min": round(min(match_confs), 2),
-            "max": round(max(match_confs), 2),
-            "mean": round(sum(match_confs) / len(match_confs), 2),
-        }
-
-    return result
-
-
-def compute_overlaps(analyses: dict[str, dict]) -> dict:
-    """Compute hit overlaps between methods."""
-    baseline = analyses.get("baseline", {})
-    pgcr = analyses.get("pgcr", {})
-    vanilla = analyses.get("vanilla_expansion", {})
-
-    b_hits = set(baseline.get("hit_ids", []))
-    p_hits = set(pgcr.get("hit_ids", []))
-    v_hits = set(vanilla.get("hit_ids", []))
-    b_all = set(baseline.get("all_ids", []))
-
-    overlaps = {}
-
-    if b_hits and p_hits:
-        overlaps["pgcr_vs_baseline"] = {
-            "pgcr_hits_also_in_baseline": sorted(p_hits & b_hits),
-            "pgcr_hits_not_in_baseline": sorted(p_hits - b_hits),
-            "baseline_hits_lost_by_pgcr": sorted(b_hits - p_hits),
-            "count_pgcr_overlaps_baseline": len(p_hits & b_hits),
-            "count_pgcr_new_hits": len(p_hits - b_hits),
-            "count_baseline_lost": len(b_hits - p_hits),
-        }
-
-    if b_hits and v_hits:
-        # Vanilla was run on baseline misses only
-        vanilla_targets = set(vanilla.get("all_ids", []))
-        expected_hard = b_all - b_hits
-        oracle_hits = b_hits | v_hits
-
-        overlaps["vanilla_expansion"] = {
-            "vanilla_target_count": len(vanilla_targets),
-            "expected_hard_case_count": len(expected_hard),
-            "is_hard_case_only": vanilla_targets == expected_hard,
-            "vanilla_new_hits": sorted(v_hits),
-            "oracle_combined_hits": sorted(oracle_hits),
-            "oracle_combined_count": len(oracle_hits),
-        }
-
-    return overlaps
-
-
-def check_eval_data(eval_path: Path) -> dict:
-    """Check enriched eval data quality."""
-    if not eval_path.exists():
-        return {"exists": False, "warnings": ["enriched eval file not found"]}
-
-    records = []
-    with open(eval_path) as f:
-        for line in f:
-            if line.strip():
-                records.append(json.loads(line))
-
-    empty_contrib = sum(1 for r in records if not r.get("contribution", "").strip())
-    has_source = sum(1 for r in records if r.get("contribution_source", "") not in ("", "missing"))
-    path_leaks = sum(1 for r in records if "/home/" in r.get("contribution", "") or "/Users/" in r.get("contribution", ""))
-    pred_counts = [len(r.get("predecessors", [])) for r in records]
-
+            c = j.get("confidence")
+            if c is not None:
+                confidences.append(float(c))
+    if not confidences:
+        return {}
     return {
-        "exists": True,
-        "total_records": len(records),
-        "non_empty_contributions": len(records) - empty_contrib,
-        "empty_contributions": empty_contrib,
-        "with_contribution_source": has_source,
-        "path_leaks": path_leaks,
-        "avg_predecessors": round(sum(pred_counts) / max(len(pred_counts), 1), 1),
-        "warnings": [] if empty_contrib == 0 else [f"{empty_contrib} records have empty contributions"],
+        "count": len(confidences),
+        "mean": round(sum(confidences) / len(confidences), 3),
+        "min": round(min(confidences), 3),
+        "max": round(max(confidences), 3),
+        "hit_mean": round(
+            sum(c for t in targets for j in t.get("judgments", []) if j.get("match") and (c := j.get("confidence")) is not None) /
+            max(sum(1 for t in targets for j in t.get("judgments", []) if j.get("match")), 1), 3
+        ),
+        "miss_mean": round(
+            sum(c for t in targets for j in t.get("judgments", []) if not j.get("match") and (c := j.get("confidence")) is not None) /
+            max(sum(1 for t in targets for j in t.get("judgments", []) if not j.get("match")), 1), 3
+        ),
     }
 
 
-def generate_markdown(analyses: dict, overlaps: dict, eval_check: dict) -> str:
-    """Generate the markdown audit report."""
-    lines = [
-        "# ACML Results Audit",
-        "",
-        f"Generated: {datetime.now().strftime('%Y-%m-%d %H:%M')}",
-        "",
-        "**This report is computed from JSON result files, not from markdown summaries.**",
-        "",
-        "## Method Comparison",
-        "",
-        "| Method | Targets | Hits | Hit@10 | 95% CI | Full-set? |",
-        "|--------|--------:|-----:|-------:|--------|-----------|",
-    ]
+def check_metadata(result: dict, method: str) -> list[str]:
+    """Check for missing or inconsistent metadata."""
+    warnings = []
+    top_keys = set(result.keys()) - {"targets"}
+    expected = {"run_id", "model", "total_targets", "completed", "hits", "hit_at_10"}
+    if method in ("pgcr", "vanilla_expansion"):
+        expected.add("method")
+        expected.add("judge_model")
+    missing = expected - top_keys
+    if missing:
+        warnings.append(f"Missing top-level keys: {missing}")
 
-    for name in ["baseline", "pgcr", "vanilla_expansion"]:
-        a = analyses.get(name, {})
-        if not a:
+    # Check method field consistency
+    if method == "vanilla_expansion" and result.get("method") != "vanilla_expansion":
+        warnings.append(f"Method field is '{result.get('method')}' instead of 'vanilla_expansion'")
+
+    # Check for private paths in string values
+    for k, v in result.items():
+        if k == "targets":
             continue
-        full = "Yes" if not a.get("is_hard_case_only") else "No (hard-case only)"
-        ci = a.get("ci_95", {})
-        ci_str = f"[{ci.get('low', '?')}%, {ci.get('high', '?')}%]"
-        label = name.replace("_", " ").title()
-        lines.append(f"| {label} | {a.get('completed', '?')} | {a.get('hits', '?')} | {a.get('hit_at_10', '?')}% | {ci_str} | {full} |")
+        if isinstance(v, str) and ("/home/" in v or "/Users/" in v):
+            warnings.append(f"Private path in {k}: {v[:80]}")
 
-    # Oracle combined
-    oracle = overlaps.get("vanilla_expansion", {})
-    if oracle.get("oracle_combined_count"):
-        lines.append(f"| Oracle Combined | 77 | {oracle['oracle_combined_count']} | {round(oracle['oracle_combined_count']/77*100, 1)}% | — | **NOT FAIR** |")
+    return warnings
 
-    lines.append("")
 
-    # Overlap analysis
-    if "pgcr_vs_baseline" in overlaps:
-        o = overlaps["pgcr_vs_baseline"]
-        lines.extend([
-            "## PGCR vs Baseline Overlap",
-            "",
-            f"- PGCR hits also in baseline: {o['count_pgcr_overlaps_baseline']}",
-            f"- PGCR new hits (baseline misses): {o['count_pgcr_new_hits']}",
-            f"- Baseline hits lost by PGCR: {o['count_baseline_lost']}",
-            "",
-        ])
+def compute_overlap(result_a: dict, result_b: dict) -> dict:
+    """Compute hit-set overlap between two methods."""
+    ids_a = {t["target_id"] for t in result_a["targets"] if t.get("hit")}
+    ids_b = {t["target_id"] for t in result_b["targets"] if t.get("hit")}
+    common = ids_a & ids_b
+    only_a = ids_a - ids_b
+    only_b = ids_b - ids_a
+    return {
+        "common_hits": len(common),
+        "only_a": len(only_a),
+        "only_b": len(only_b),
+        "a_hits": len(ids_a),
+        "b_hits": len(ids_b),
+    }
 
-    if "vanilla_expansion" in overlaps:
-        o = overlaps["vanilla_expansion"]
-        lines.extend([
-            "## Vanilla Expansion Analysis",
-            "",
-            f"- Evaluated on {o['vanilla_target_count']} targets (baseline misses)",
-            f"- Hard-case-only: {o['is_hard_case_only']}",
-            f"- New hits: {o['oracle_combined_count'] - len(analyses.get('baseline', {}).get('hit_ids', []))}",
-            f"- Oracle combined hits: {o['oracle_combined_count']} / 77 = {round(o['oracle_combined_count']/77*100, 1)}%",
-            "",
-            "**WARNING: Oracle combined uses knowledge of baseline failures. Not a fair standalone method.**",
-            "",
-        ])
 
-    # Per-method details
-    for name in ["baseline", "pgcr", "vanilla_expansion"]:
-        a = analyses.get(name, {})
-        if not a:
-            continue
-        label = name.replace("_", " ").title()
-        lines.extend([
-            f"## {label} Details",
-            "",
-            f"- Model: {a.get('model', 'unknown')}",
-            f"- Completed: {a.get('completed', '?')} / {a.get('total_targets', '?')}",
-        ])
-
-        if a.get("candidate_counts"):
-            cc = a["candidate_counts"]
-            lines.append(f"- Candidates: min={cc['min']}, max={cc['max']}, mean={cc['mean']}")
-
-        tok = a.get("tokens", {})
-        if tok.get("input") or tok.get("output"):
-            lines.append(f"- Tokens: input={tok.get('input', 0):,}, output={tok.get('output', 0):,}")
-        elif tok.get("from_field"):
-            lines.append(f"- Tokens (from file): {tok['from_field']:,}")
-
-        if a.get("confidence"):
-            c = a["confidence"]
-            if "matched_ideas" in c:
-                m = c["matched_ideas"]
-                lines.append(f"- Match confidence: mean={m['mean']}, min={m['min']}, max={m['max']} (n={m['n']})")
-
-        if a.get("warnings"):
-            lines.append("")
-            for w in a["warnings"]:
-                lines.append(f"  ⚠ {w}")
-
-        lines.append("")
-
-    # Eval data check
-    lines.extend([
-        "## Eval Data Quality",
-        "",
-        f"- Enriched file exists: {eval_check.get('exists', False)}",
-    ])
-    if eval_check.get("exists"):
-        lines.extend([
-            f"- Total records: {eval_check.get('total_records', 0)}",
-            f"- Non-empty contributions: {eval_check.get('non_empty_contributions', 0)}",
-            f"- Empty contributions: {eval_check.get('empty_contributions', 0)}",
-            f"- Avg predecessors: {eval_check.get('avg_predecessors', 0)}",
-            f"- Path leaks: {eval_check.get('path_leaks', 0)}",
-        ])
-    if eval_check.get("warnings"):
-        for w in eval_check["warnings"]:
-            lines.append(f"  ⚠ {w}")
-    lines.append("")
-
-    # Global warnings
-    all_warnings = []
-    for name, a in analyses.items():
-        for w in a.get("warnings", []):
-            all_warnings.append(f"[{name}] {w}")
-    for w in eval_check.get("warnings", []):
-        all_warnings.append(f"[eval_data] {w}")
-
-    if all_warnings:
-        lines.extend([
-            "## All Warnings",
-            "",
-        ])
-        for w in all_warnings:
-            lines.append(f"- {w}")
-        lines.append("")
-
-    return "\n".join(lines)
+def load_tokens_from_logs() -> dict:
+    """Load token totals from experiment logs if available."""
+    summary_path = LOGS_DIR / "experiment_summary.json"
+    if not summary_path.exists():
+        return {}
+    with open(summary_path) as f:
+        return json.load(f)
 
 
 def main():
-    results_dir = PROJECT_ROOT / "results"
-    eval_path = PROJECT_ROOT / "data" / "scireasoning" / "eval_neurips_2025_oral_enriched.jsonl"
-    output_json = results_dir / "acml_results_audit.json"
-    output_md = results_dir / "acml_results_audit.md"
-
-    # Load and analyze each method
-    analyses = {}
-
-    baseline_path = results_dir / "baseline_mimo.json"
-    if baseline_path.exists():
-        data = load_json(baseline_path)
-        analyses["baseline"] = analyze_method(data, "baseline")
-
-    pgcr_path = results_dir / "pgcr_full.json"
-    if pgcr_path.exists():
-        data = load_json(pgcr_path)
-        analyses["pgcr"] = analyze_method(data, "pgcr_full")
-
-    vanilla_path = results_dir / "vanilla_expansion_eval.json"
-    if vanilla_path.exists():
-        data = load_json(vanilla_path)
-        # Check if it was run on hard-case only
-        baseline_ids = set(analyses.get("baseline", {}).get("all_ids", []))
-        baseline_hits = set(analyses.get("baseline", {}).get("hit_ids", []))
-        hard_case_ids = baseline_ids - baseline_hits
-        vanilla_ids = {t["target_id"] for t in data.get("targets", [])}
-        is_hard = vanilla_ids == hard_case_ids
-        analyses["vanilla_expansion"] = analyze_method(data, "vanilla_expansion", is_hard_case_only=is_hard)
-
-    # Compute overlaps
-    overlaps = compute_overlaps(analyses)
-
-    # Check eval data
-    eval_check = check_eval_data(eval_path)
-
-    # Build output
     audit = {
-        "generated": datetime.now().isoformat(),
-        "methods": analyses,
-        "overlaps": overlaps,
-        "eval_data": eval_check,
+        "generated": datetime.now(timezone.utc).isoformat(),
+        "result_files": {},
+        "methods": {},
+        "overlaps": {},
+        "oracle_warnings": [],
+        "token_totals": {},
+        "metadata_warnings": [],
+        "enrichment_status": {},
     }
 
+    # Load all results
+    results = {}
+    for name, path in RESULT_FILES.items():
+        r = load_result(path)
+        if r is None:
+            audit["result_files"][name] = {"path": str(path), "status": "missing"}
+            continue
+        results[name] = r
+        audit["result_files"][name] = {
+            "path": str(path.name),
+            "status": "found",
+            "top_keys": [k for k in r if k != "targets"],
+        }
+
+    # Per-method analysis
+    for name, r in results.items():
+        targets = r.get("targets", [])
+        total = r.get("total_targets", len(targets))
+        completed = r.get("completed", len(targets))
+        hits = r.get("hits", 0)
+        hit_at_10 = r.get("hit_at_10", 0.0)
+
+        # Recompute hits from targets for verification
+        recomputed_hits = sum(1 for t in targets if t.get("hit"))
+
+        method_info = {
+            "total_targets": total,
+            "completed": completed,
+            "hits": hits,
+            "hits_recomputed": recomputed_hits,
+            "hit_at_10": hit_at_10,
+            "hit_at_10_recomputed": round(recomputed_hits / max(completed, 1) * 100, 1),
+            "is_full_set": completed == 77,
+            "candidates": candidate_count_distribution(targets, name),
+            "judge_confidence": judge_confidence_summary(targets),
+            "metadata_warnings": check_metadata(r, name),
+        }
+
+        # Token info
+        if "total_input_tokens" in r:
+            method_info["total_input_tokens"] = r["total_input_tokens"]
+        if "total_output_tokens" in r:
+            method_info["total_output_tokens"] = r["total_output_tokens"]
+        if "total_tokens" in r:
+            method_info["total_tokens"] = r["total_tokens"]
+
+        # Bootstrap CI
+        ci = bootstrap_ci(recomputed_hits, completed)
+        method_info["bootstrap_95ci"] = ci
+
+        # Check recomputed vs reported
+        if hits != recomputed_hits:
+            method_info["warning"] = f"Reported hits ({hits}) != recomputed ({recomputed_hits})"
+
+        audit["methods"][name] = method_info
+        audit["metadata_warnings"].extend(
+            f"[{name}] {w}" for w in method_info["metadata_warnings"]
+        )
+
+    # Oracle warning
+    vanilla = results.get("vanilla_expansion")
+    baseline = results.get("baseline")
+    if vanilla and baseline:
+        vanilla_targets = {t["target_id"] for t in vanilla["targets"]}
+        baseline_targets = {t["target_id"] for t in baseline["targets"]}
+        baseline_hits = {t["target_id"] for t in baseline["targets"] if t.get("hit")}
+        baseline_misses = baseline_targets - baseline_hits
+
+        if vanilla_targets == baseline_misses:
+            audit["oracle_warnings"].append(
+                "vanilla_expansion was evaluated ONLY on baseline misses (48 targets). "
+                "Combined baseline+vanilla results are oracle-style and not a fair method."
+            )
+            # Compute oracle combined
+            vanilla_hits = {t["target_id"] for t in vanilla["targets"] if t.get("hit")}
+            oracle_hits = baseline_hits | vanilla_hits
+            audit["oracle_warnings"].append(
+                f"Oracle combined: {len(oracle_hits)}/77 = {round(len(oracle_hits)/77*100,1)}% — "
+                "this must not be reported as the main method."
+            )
+
+    # Overlaps
+    method_pairs = list(results.keys())
+    for i, a in enumerate(method_pairs):
+        for b in method_pairs[i+1:]:
+            overlap = compute_overlap(results[a], results[b])
+            audit["overlaps"][f"{a}_vs_{b}"] = overlap
+
+    # Token totals from logs
+    log_tokens = load_tokens_from_logs()
+    if log_tokens:
+        audit["token_totals"] = log_tokens
+
+    # Enrichment status
+    enriched_path = PROJECT_ROOT / "data" / "scireasoning" / "eval_neurips_2025_oral_enriched.jsonl"
+    if enriched_path.exists():
+        with open(enriched_path) as f:
+            records = [json.loads(line) for line in f]
+        non_empty = sum(1 for r in records if r.get("contribution"))
+        audit["enrichment_status"] = {
+            "path": str(enriched_path.name),
+            "total": len(records),
+            "non_empty_contributions": non_empty,
+            "ready": non_empty == 77,
+        }
+
     # Write JSON
-    with open(output_json, "w") as f:
+    audit_path = RESULTS_DIR / "acml_results_audit.json"
+    with open(audit_path, "w") as f:
         json.dump(audit, f, indent=2, ensure_ascii=False)
+    print(f"Wrote: {audit_path}")
 
-    # Write markdown
-    md = generate_markdown(analyses, overlaps, eval_check)
-    with open(output_md, "w") as f:
-        f.write(md)
+    # Write Markdown
+    md_path = RESULTS_DIR / "acml_results_audit.md"
+    with open(md_path, "w") as f:
+        f.write("# ACML Results Audit\n\n")
+        f.write(f"Generated: {audit['generated']}\n\n")
 
-    print(f"Audit complete:")
-    print(f"  JSON: {output_json}")
-    print(f"  Markdown: {output_md}")
-    print()
-    for name, a in analyses.items():
-        ci = a.get("ci_95", {})
-        print(f"  {name}: {a['hits']}/{a['completed']} = {a['hit_at_10']}% CI[{ci.get('low')}%, {ci.get('high')}%]")
+        # Methods table
+        f.write("## Method Results\n\n")
+        f.write("| Method | Targets | Completed | Hits | Hit@10 | 95% CI | Full-set |\n")
+        f.write("|---|---:|---:|---:|---:|---|---|\n")
+        for name, m in audit["methods"].items():
+            ci = m.get("bootstrap_95ci", {})
+            ci_str = f"[{ci.get('low', '?')}, {ci.get('high', '?')}]"
+            full = "yes" if m["is_full_set"] else f"NO ({m['completed']}/77)"
+            f.write(f"| {name} | {m['total_targets']} | {m['completed']} | {m['hits']} | {m['hit_at_10']}% | {ci_str} | {full} |\n")
+        f.write("\n")
+
+        # Overlaps
+        f.write("## Hit-Set Overlaps\n\n")
+        for pair, ov in audit["overlaps"].items():
+            f.write(f"### {pair}\n\n")
+            f.write(f"- Method A hits: {ov['a_hits']}\n")
+            f.write(f"- Method B hits: {ov['b_hits']}\n")
+            f.write(f"- Common hits: {ov['common_hits']}\n")
+            f.write(f"- Only in A: {ov['only_a']}\n")
+            f.write(f"- Only in B: {ov['only_b']}\n\n")
+
+        # Oracle warnings
+        if audit["oracle_warnings"]:
+            f.write("## Oracle Warnings\n\n")
+            for w in audit["oracle_warnings"]:
+                f.write(f"⚠️ {w}\n\n")
+
+        # Token totals
+        f.write("## Token Usage\n\n")
+        for name, m in audit["methods"].items():
+            tokens = m.get("total_tokens") or (m.get("total_input_tokens", 0) + m.get("total_output_tokens", 0))
+            f.write(f"- {name}: {tokens:,} tokens\n")
+        f.write("\n")
+
+        # Candidate counts
+        f.write("## Candidate Counts\n\n")
+        for name, m in audit["methods"].items():
+            c = m.get("candidates", {})
+            if c:
+                f.write(f"- {name}: min={c.get('min')}, max={c.get('max')}, mean={c.get('mean')}\n")
+        f.write("\n")
+
+        # Judge confidence
+        f.write("## Judge Confidence\n\n")
+        for name, m in audit["methods"].items():
+            jc = m.get("judge_confidence", {})
+            if jc:
+                f.write(f"- {name}: mean={jc.get('mean')}, hit_mean={jc.get('hit_mean')}, miss_mean={jc.get('miss_mean')}\n")
+        f.write("\n")
+
+        # Metadata warnings
+        if audit["metadata_warnings"]:
+            f.write("## Metadata Warnings\n\n")
+            for w in audit["metadata_warnings"]:
+                f.write(f"- {w}\n")
+            f.write("\n")
+
+        # Enrichment status
+        es = audit.get("enrichment_status", {})
+        if es:
+            f.write("## Enrichment Status\n\n")
+            f.write(f"- File: {es.get('path')}\n")
+            f.write(f"- Total records: {es.get('total')}\n")
+            f.write(f"- Non-empty contributions: {es.get('non_empty_contributions')}\n")
+            f.write(f"- Ready for ACML judging: {es.get('ready')}\n\n")
+
+        # Recomputation notes
+        f.write("## Recomputation Notes\n\n")
+        for name, m in audit["methods"].items():
+            if m.get("warning"):
+                f.write(f"- ⚠️ {name}: {m['warning']}\n")
+            if m["hits"] == m["hits_recomputed"]:
+                f.write(f"- ✅ {name}: reported hits match recomputed\n")
+        f.write("\n")
+
+    print(f"Wrote: {md_path}")
+    print("\nAudit complete.")
+    return 0
 
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())

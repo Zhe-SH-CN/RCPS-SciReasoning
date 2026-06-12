@@ -189,7 +189,7 @@ def judge_idea(
 
     messages = [{"role": "user", "content": prompt}]
     result = chat_completion(
-        messages, model=model, temperature=0.0, max_tokens=4096,
+        messages, model=model, temperature=0.0, max_tokens=512,
         sleep_seconds=sleep_seconds,
     )
 
@@ -253,7 +253,7 @@ def main():
     remaining = [r for r in records if r["target_id"] not in completed_ids]
     print(f"Processing {len(remaining)} remaining targets")
 
-    # Stats - recompute from loaded results when resuming
+    # Stats -- recompute from loaded results on resume
     total_input_tokens = 0
     total_output_tokens = 0
     total_hits = 0
@@ -268,7 +268,7 @@ def main():
             for j in r.get("judgments", []):
                 total_input_tokens += j.get("input_tokens") or 0
                 total_output_tokens += j.get("output_tokens") or 0
-        print(f"Resume stats: {total_hits} hits, {total_input_tokens} in-tokens, {total_output_tokens} out-tokens")
+        print(f"  Recomputed from resume: {total_hits} hits, {total_input_tokens} in-tokens, {total_output_tokens} out-tokens")
 
     for idx, record in enumerate(remaining):
         target_id = record["target_id"]

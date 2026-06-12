@@ -1,70 +1,80 @@
 # ACML Results Audit
 
-Generated: 2026-06-11 22:57
+Generated: 2026-06-12T00:46:54.496680+00:00
 
-**This report is computed from JSON result files, not from markdown summaries.**
+## Method Results
 
-## Method Comparison
+| Method | Targets | Completed | Hits | Hit@10 | 95% CI | Full-set |
+|---|---:|---:|---:|---:|---|---|
+| baseline | 77 | 77 | 29 | 37.7% | [27.3, 48.1] | yes |
+| pgcr | 77 | 77 | 22 | 28.6% | [18.2, 39.0] | yes |
+| vanilla_expansion | 48 | 48 | 16 | 33.3% | [20.8, 47.9] | NO (48/77) |
 
-| Method | Targets | Hits | Hit@10 | 95% CI | Full-set? |
-|--------|--------:|-----:|-------:|--------|-----------|
-| Baseline | 77 | 29 | 37.7% | [27.3%, 48.1%] | Yes |
-| Pgcr | 77 | 22 | 28.6% | [18.2%, 39.0%] | Yes |
-| Vanilla Expansion | 48 | 16 | 33.3% | [20.8%, 47.9%] | No (hard-case only) |
-| Oracle Combined | 77 | 45 | 58.4% | — | **NOT FAIR** |
+## Hit-Set Overlaps
 
-## PGCR vs Baseline Overlap
+### baseline_vs_pgcr
 
-- PGCR hits also in baseline: 11
-- PGCR new hits (baseline misses): 11
-- Baseline hits lost by PGCR: 18
+- Method A hits: 29
+- Method B hits: 22
+- Common hits: 11
+- Only in A: 18
+- Only in B: 11
 
-## Vanilla Expansion Analysis
+### baseline_vs_vanilla_expansion
 
-- Evaluated on 48 targets (baseline misses)
-- Hard-case-only: True
-- New hits: 16
-- Oracle combined hits: 45 / 77 = 58.4%
+- Method A hits: 29
+- Method B hits: 16
+- Common hits: 0
+- Only in A: 29
+- Only in B: 16
 
-**WARNING: Oracle combined uses knowledge of baseline failures. Not a fair standalone method.**
+### pgcr_vs_vanilla_expansion
 
-## Baseline Details
+- Method A hits: 22
+- Method B hits: 16
+- Common hits: 2
+- Only in A: 20
+- Only in B: 14
 
-- Model: mimo-v2.5-pro
-- Completed: 77 / 77
-- Candidates: min=0, max=10, mean=9.5
-- Tokens: input=510,254, output=586,664
-- Match confidence: mean=0.84, min=0.6, max=0.95 (n=35)
+## Oracle Warnings
 
-## Pgcr Details
+⚠️ vanilla_expansion was evaluated ONLY on baseline misses (48 targets). Combined baseline+vanilla results are oracle-style and not a fair method.
 
-- Model: mimo-v2.5-pro
-- Completed: 77 / 77
-- Candidates: min=12, max=96, mean=55.8
-- Tokens (from file): 814,247
-- Match confidence: mean=0.84, min=0.7, max=0.95 (n=25)
+⚠️ Oracle combined: 45/77 = 58.4% — this must not be reported as the main method.
 
-## Vanilla Expansion Details
+## Token Usage
 
-- Model: mimo-v2.5-pro
-- Completed: 48 / 48
-- Candidates: min=20, max=50, mean=41.7
-- Tokens (from file): 507,478
-- Match confidence: mean=0.84, min=0.6, max=0.95 (n=17)
+- baseline: 1,096,918 tokens
+- pgcr: 814,247 tokens
+- vanilla_expansion: 507,478 tokens
 
-  ⚠ evaluated on baseline-miss subset only (not full-set)
-  ⚠ method field says "pgcr_full" but analyzed as "vanilla_expansion"
+## Candidate Counts
 
-## Eval Data Quality
+- baseline: min=0, max=10, mean=9.5
+- pgcr: min=12, max=96, mean=55.8
+- vanilla_expansion: min=20, max=50, mean=41.7
 
-- Enriched file exists: True
+## Judge Confidence
+
+- baseline: mean=0.106, hit_mean=0.836, miss_mean=0.069
+- pgcr: mean=0.083, hit_mean=0.84, miss_mean=0.058
+- vanilla_expansion: mean=0.114, hit_mean=0.841, miss_mean=0.087
+
+## Metadata Warnings
+
+- [pgcr] Missing top-level keys: {'model'}
+- [vanilla_expansion] Missing top-level keys: {'model'}
+
+## Enrichment Status
+
+- File: eval_neurips_2025_oral_enriched.jsonl
 - Total records: 77
 - Non-empty contributions: 77
-- Empty contributions: 0
-- Avg predecessors: 6.9
-- Path leaks: 0
+- Ready for ACML judging: True
 
-## All Warnings
+## Recomputation Notes
 
-- [vanilla_expansion] evaluated on baseline-miss subset only (not full-set)
-- [vanilla_expansion] method field says "pgcr_full" but analyzed as "vanilla_expansion"
+- ✅ baseline: reported hits match recomputed
+- ✅ pgcr: reported hits match recomputed
+- ✅ vanilla_expansion: reported hits match recomputed
+
