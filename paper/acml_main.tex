@@ -227,12 +227,86 @@ We show that candidate expansion does not reliably improve scientific idea gener
 
 We enrich the Sci-Reasoning eval data with target contributions from the benchmark's own evaluation results. All 77 targets receive non-empty contributions from \texttt{evaluation\_results\_claude\_sonnet\_final.json}. The enrichment process normalizes titles for matching and strips private paths from output.
 
+The enrichment process:
+\begin{enumerate}
+\item Load the original eval JSONL with 77 targets (all with empty contributions).
+\item Load contribution data from Sci-Reasoning result files.
+\item Match by normalized title (lowercase, collapsed whitespace).
+\item Fill contribution and contribution\_source fields.
+\item Strip private paths from all text fields.
+\end{enumerate}
+
+Result: 77/77 targets enriched, average predecessors 6.9.
+
 \section{Prompt Templates}\label{apd:prompts}
 
 \textbf{Generation prompt.} Given predecessor papers and a synthesis narrative, generate exactly 10 research ideas as a JSON array with fields: idea\_title, idea\_description, key\_innovation, addressed\_gap.
 
+The generation prompt includes:
+\begin{itemize}
+\item Predecessor papers with titles, roles, and relationship sentences.
+\item Synthesis narrative describing the research direction.
+\item Instruction to generate distinct, specific ideas that build on predecessors.
+\item JSON output format specification.
+\end{itemize}
+
 \textbf{Scoring prompt.} Score each idea on 5 dimensions (grounding, specificity, plausibility, novelty, clarity) from 1--5. Overall score is a weighted average: 0.35$\times$grounding + 0.25$\times$specificity + 0.2$\times$plausibility + 0.15$\times$novelty + 0.05$\times$clarity.
 
+The scoring prompt includes:
+\begin{itemize}
+\item Context: predecessor papers and synthesis narrative.
+\item The idea to score with all its fields.
+\item Detailed rubric for each dimension (1--5 scale).
+\item Weighted average formula.
+\item JSON output format specification.
+\end{itemize}
+
 \textbf{Judge prompt.} Determine whether a generated idea is a semantic match for the target paper. Return a JSON object with match (boolean), confidence (0--1), and reason (string).
+
+The judge prompt includes:
+\begin{itemize}
+\item Target paper title and enriched contribution.
+\item Generated idea with all fields.
+\item Instruction to focus on semantic overlap, not surface wording.
+\item JSON output format specification.
+\end{itemize}
+
+\section{Token Usage}\label{apd:tokens}
+
+\begin{table}[htp]
+\centering
+\caption{Token usage by method.}\label{tab:tokens}
+\begin{tabular}{lcc}
+\toprule
+Method & Total Tokens & Tokens/Target \\
+\midrule
+Direct-10 (enriched) & 810,522 & 10,526 \\
+BCS-50 & 853,688 & 11,087 \\
+PGCR (enriched) & 854,831 & 11,102 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+BCS-50 uses only 5\% more tokens than Direct-10 despite generating 5$\times$ more candidates, because the scoring calls are shorter than generation calls.
+
+\section{Bootstrap Confidence Intervals}\label{apd:bootstrap}
+
+We compute bootstrap 95\% confidence intervals for Hit@10 using 10,000 resamples:
+
+\begin{table}[htp]
+\centering
+\caption{Bootstrap 95\% CI for Hit@10.}\label{tab:ci}
+\begin{tabular}{lccc}
+\toprule
+Method & Hit@10 & CI Low & CI High \\
+\midrule
+Direct-10 (enriched) & 26.0\% & 16.9\% & 36.4\% \\
+BCS-50 & 20.8\% & 11.7\% & 29.9\% \\
+PGCR (enriched) & 18.2\% & 10.4\% & 27.3\% \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The confidence intervals overlap substantially, suggesting that the differences between methods are not statistically significant at the 95\% level. However, the consistent ordering (Direct-10 > BCS-50 > PGCR) across all metrics is noteworthy.
 
 \end{document}
