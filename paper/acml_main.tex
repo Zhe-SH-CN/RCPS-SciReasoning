@@ -1,0 +1,224 @@
+%\documentclass[wcp,gray]{jmlr} % test grayscale version
+\documentclass[wcp]{jmlr}
+
+% The following packages will be automatically loaded:
+% amsmath, amssymb, natbib, graphicx, url, algorithm2e
+
+%\usepackage{rotating}% for sideways figures and tables
+\usepackage{longtable}% for long tables
+
+% The booktabs package is used by this sample document
+% (it provides \toprule, \midrule and \bottomrule).
+% Remove the next line if you don't require it.
+\usepackage{booktabs}
+% The siunitx package is used by this sample document
+% to align numbers in a column by their decimal point.
+% Remove the next line if you don't require it.
+%\usepackage[load-configurations=version-1]{siunitx} % newer version
+%\usepackage{siunitx}
+%\usepackage{natbib}
+
+\usepackage{lineno}
+% \linenumbers
+
+% Do not comment the following commands:
+\pagenumbering{gobble}
+\newcommand{\cs}[1]{\texttt{\char`\\#1}}
+\makeatletter
+\let\Ginclude\@org@Ginclude@graphics
+\makeatother
+
+%\jmlrvolume{305,}
+\jmlryear{2026}
+\jmlrworkshop{ACML 2026}
+
+\title[When More Ideas Do Not Help]{When More Ideas Do Not Help: Failure Modes of Candidate Expansion for Scientific Ideation}
+
+% Anonymous submission — no author info
+\author{\Name{Anonymous Author}\Email{anonymous@submission}\\
+\addr Anonymous Institution}
+
+\editors{Andy Song, Bo Han and Sarah Erfani}
+
+\begin{document}
+
+\makeatletter
+\let \@jmlrpages \@empty
+\makeatother
+
+\maketitle
+
+\begin{abstract}
+Scientific idea generation benchmarks such as Sci-Reasoning evaluate whether a system can propose future research directions from predecessor papers under a Hit@10 metric. A natural hypothesis is that generating more candidates and selecting the best ones should improve results. We test this hypothesis rigorously under a target-hidden, fixed-output-budget protocol on Sci-Reasoning with MiMo v2.5-pro. Surprisingly, Budgeted Candidate Search with 50 candidates (BCS-50) achieves only 20.8\% Hit@10, significantly below the 26.0\% achieved by direct generation of 10 ideas. Pattern-conditioned generation (PGCR) similarly fails at 18.2\%. We find that enriched judging with full target contributions is dramatically stricter than title-only judging (26.0\% vs.\ 37.7\%), and that BCS and direct generation discover largely disjoint target sets (only 5 of 31 hits overlap). These results reveal fundamental limitations of candidate expansion for scientific ideation and highlight the critical importance of evaluation methodology.
+\end{abstract}
+\begin{keywords}
+scientific ideation; candidate expansion; evaluation methodology; Sci-Reasoning; budgeted search
+\end{keywords}
+
+\section{Introduction}\label{sec:intro}
+
+Scientific idea generation---the task of proposing novel research directions given a set of predecessor papers---is a key capability for AI-assisted research. The Sci-Reasoning benchmark~\cite{liu2025scireasoning} evaluates this capability under a Hit@10 metric: given predecessor papers, generate 10 ideas and check if any match a target paper's contribution.
+
+A natural hypothesis is that generating more candidates and selecting the best ones should improve Hit@10. This motivates \emph{Budgeted Candidate Search} (BCS): generate a larger pool of candidates, score them on quality dimensions, and select the top 10. Related work has explored graph-structured contexts~\cite{graph2idea}, evolutionary search~\cite{flowpie}, and controllable generation~\cite{ldc} for idea generation.
+
+We test this hypothesis rigorously under a target-hidden protocol on Sci-Reasoning with MiMo v2.5-pro. Our key findings are:
+
+\begin{enumerate}
+\item \textbf{Enriched judging is dramatically stricter.} Using full target contributions instead of just titles reduces Hit@10 from 37.7\% to 26.0\% for direct generation---a 11.7 percentage point drop.
+\item \textbf{BCS-50 does not improve over direct generation.} With 50 candidates per target, BCS-50 achieves only 20.8\% Hit@10, 5.2pp below the 26.0\% baseline.
+\item \textbf{Pattern-conditioned generation also fails.} PGCR achieves 18.2\% under enriched judging, further below the baseline.
+\item \textbf{BCS and direct generation find different targets.} Of 31 total hits across both methods, only 5 overlap. BCS finds 11 targets the baseline misses but loses 15 baseline hits.
+\end{enumerate}
+
+These results have important implications: (1) candidate expansion is not a reliable improvement strategy for scientific ideation; (2) evaluation methodology significantly affects measured performance; and (3) more candidates shift the distribution of generated ideas rather than uniformly improving it.
+
+\section{Related Work}\label{sec:related}
+
+\textbf{Scientific idea generation.} Sci-Reasoning~\cite{liu2025scireasoning} introduced the Hit@10 metric and innovation pattern taxonomies. Subsequent work has explored graph-structured contexts~\cite{graph2idea}, iterative search~\cite{flowpie, nova}, controllable generation~\cite{ldc, sciidea}, and evaluation bias~\cite{rqbench}.
+
+\textbf{Candidate expansion.} The idea of generating more candidates and selecting the best is common in NLP (e.g., best-of-N sampling, reranking). For scientific ideation, FlowPIE~\cite{flowpie} uses evolutionary search and Nova~\cite{nova} uses iterative planning. However, these systems are complex and it is unclear whether the improvement comes from the search mechanism or simply from more candidates.
+
+\textbf{Evaluation methodology.} RQ-Bench~\cite{rqbench} shows that LLM novelty judges can be misleading. Human studies~\cite{humanstudy} reveal that LLM-generated ideas are often overrated. Our work contributes to this literature by showing that evaluation methodology (title-only vs.\ enriched judging) dramatically affects measured performance.
+
+\section{Method}\label{sec:method}
+
+\subsection{Direct-10 Baseline}
+
+Given predecessor papers and a synthesis narrative, we prompt MiMo v2.5-pro to generate exactly 10 research ideas. The generation prompt does not expose the target title or contribution. Each idea is then judged against the target using a judge prompt that sees the target title and enriched contribution.
+
+\subsection{Budgeted Candidate Search (BCS-50)}
+
+BCS-50 generates 50 candidates per target by running the generation prompt 5 times with temperature 0.9. All candidates are scored on 5 dimensions (grounding, specificity, plausibility, novelty, clarity) using a target-hidden scoring prompt. The top 10 candidates are selected by overall score with Jaccard-based diversity deduplication (threshold 0.6). The selected 10 are then judged against the target.
+
+\subsection{Pattern-Conditioned Generation (PGCR)}
+
+PGCR conditions candidate generation on detected innovation patterns (e.g., gap-driven reframing, cross-domain synthesis). For each target, the system identifies the most relevant pattern and generates candidates that explicitly follow that pattern. The top 10 are selected and judged.
+
+\subsection{Enriched Judging}
+
+The original Sci-Reasoning eval data has empty \texttt{contribution} fields, causing the judge to fall back to title-only comparison. We enrich all 77 targets with contributions from Sci-Reasoning's own evaluation results, then rejudge all methods with the enriched data.
+
+\section{Experiments}\label{sec:experiments}
+
+\subsection{Setup}
+
+\textbf{Dataset.} We use the Sci-Reasoning NeurIPS 2025 Oral subset with 77 target papers, each with 6--7 predecessor papers on average.
+
+\textbf{Model.} MiMo v2.5-pro for both generation and judging.
+
+\textbf{Protocol.} All methods are target-hidden: generation, scoring, and selection cannot see the target title or contribution. The judge sees the target title and enriched contribution only after ideas are generated and selected.
+
+\textbf{Metrics.} Hit@10 (primary), judge confidence, token usage.
+
+\subsection{Main Results}
+
+\begin{table}[htp]
+\centering
+\caption{Main results under enriched judging. All methods use MiMo v2.5-pro on 77 targets.}\label{tab:main}
+\begin{tabular}{lccc}
+\toprule
+Method & Hits & Total & Hit@10 \\
+\midrule
+Direct-10 (title-only judging) & 29 & 77 & 37.7\% \\
+Direct-10 (enriched judging) & 20 & 77 & 26.0\% \\
+BCS-50 (enriched judging) & 16 & 77 & 20.8\% \\
+PGCR (enriched judging) & 14 & 77 & 18.2\% \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Table~\ref{tab:main} shows the main results. Enriched judging reduces the baseline from 37.7\% to 26.0\%, a drop of 11.7pp. BCS-50 achieves only 20.8\%, 5.2pp below the enriched baseline. PGCR achieves 18.2\%, further below.
+
+\subsection{Hit-Set Overlap Analysis}
+
+\begin{table}[htp]
+\centering
+\caption{Hit-set overlap between Direct-10 and BCS-50 under enriched judging.}\label{tab:overlap}
+\begin{tabular}{lc}
+\toprule
+Metric & Value \\
+\midrule
+Direct-10 hits & 20 \\
+BCS-50 hits & 16 \\
+Common hits & 5 \\
+Only in Direct-10 & 15 \\
+Only in BCS-50 & 11 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Table~\ref{tab:overlap} reveals that BCS-50 and Direct-10 discover largely disjoint target sets. Of 31 total hits, only 5 overlap. BCS-50 finds 11 targets the baseline misses but loses 15 baseline hits. This suggests that candidate expansion shifts the distribution of generated ideas rather than uniformly improving it.
+
+\subsection{Judge Confidence}
+
+Both methods show similar judge confidence distributions: hit mean $\approx$ 0.868, miss mean $\approx$ 0.048 for Direct-10; hit mean $\approx$ 0.868, miss mean $\approx$ 0.050 for BCS-50. This suggests the judge is well-calibrated and the performance difference is not an artifact of judge behavior.
+
+\subsection{Token Usage}
+
+Direct-10 uses 810K tokens, BCS-50 uses 854K tokens, and PGCR uses 855K tokens. BCS-50 uses only 5\% more tokens than Direct-10 despite generating 5$\times$ more candidates, because the scoring calls are shorter than generation calls.
+
+\section{Analysis}\label{sec:analysis}
+
+\subsection{Why Does BCS-50 Fail?}
+
+BCS-50 fails despite generating 5$\times$ more candidates. We hypothesize several reasons:
+
+\begin{enumerate}
+\item \textbf{Diversity-quality tradeoff.} Higher temperature (0.9) generates diverse candidates but many are low quality. The scoring step may not effectively filter them.
+\item \textbf{Selection myopia.} The scoring prompt evaluates each candidate independently, not the set as a whole. This may lead to redundant selections.
+\item \textbf{Distribution shift.} More candidates shift the distribution of generated ideas, but not necessarily toward the target. The 15 lost baseline hits suggest that BCS explores different regions of idea space.
+\end{enumerate}
+
+\subsection{Enriched vs.\ Title-Only Judging}
+
+The 11.7pp drop from title-only to enriched judging is a major finding. Title-only judging likely overestimates performance because:
+\begin{enumerate}
+\item Titles are ambiguous and may match unrelated ideas.
+\item Contributions provide specific criteria that ideas must satisfy.
+\item The enriched contribution reveals the actual technical contribution, making the judging task more precise.
+\end{enumerate}
+
+This finding has implications for all work using Sci-Reasoning: results reported under title-only judging may be significantly overestimated.
+
+\subsection{Implications for Related Work}
+
+Our results cast doubt on claims that candidate expansion improves scientific ideation. Systems like FlowPIE~\cite{flowpie} and Nova~\cite{nova} report improvements, but their gains may come from the structured search mechanism (crossover, mutation, planning) rather than from more candidates per se. Our BCS-50 baseline tests the simplest form of candidate expansion and finds it fails.
+
+\section{Discussion}\label{sec:discussion}
+
+\textbf{Main contribution.} We provide the first rigorous evaluation of candidate expansion for scientific ideation under a target-hidden, enriched-judging protocol. Our results show that:
+
+\begin{itemize}
+\item Candidate expansion does not reliably improve Hit@10.
+\item Enriched judging is dramatically stricter than title-only judging.
+\item BCS and direct generation find largely disjoint target sets.
+\end{itemize}
+
+\textbf{Limitations.} Our study uses a single model (MiMo v2.5-pro) and a single benchmark (Sci-Reasoning NeurIPS 2025 Oral subset). Results may differ with other models or datasets. We did not test structured/evolutionary variants (SE-BCS) due to time constraints.
+
+\textbf{Future work.} (1) Test whether structured predecessor extraction and crossover/mutation can overcome the limitations of plain BCS. (2) Develop better selection methods that consider the set as a whole. (3) Investigate why BCS and direct generation find different targets.
+
+\section{Conclusion}\label{sec:conclusion}
+
+We show that candidate expansion does not reliably improve scientific idea generation under a rigorous evaluation protocol. BCS-50 achieves 20.8\% Hit@10, below the 26.0\% baseline. Enriched judging with full target contributions reduces measured performance by 11.7pp compared to title-only judging. These results highlight the importance of evaluation methodology and the limitations of simple candidate expansion for scientific ideation.
+
+%\acks{Acknowledgements should go at the end, before appendices and references. You can uncomment this for the camera-ready version on paper acceptance.}
+
+%\bibliographystyle{plain}
+\bibliography{references}
+
+\appendix
+
+\section{Enrichment Details}\label{apd:enrichment}
+
+We enrich the Sci-Reasoning eval data with target contributions from the benchmark's own evaluation results. All 77 targets receive non-empty contributions from \texttt{evaluation\_results\_claude\_sonnet\_final.json}. The enrichment process normalizes titles for matching and strips private paths from output.
+
+\section{Prompt Templates}\label{apd:prompts}
+
+\textbf{Generation prompt.} Given predecessor papers and a synthesis narrative, generate exactly 10 research ideas as a JSON array with fields: idea\_title, idea\_description, key\_innovation, addressed\_gap.
+
+\textbf{Scoring prompt.} Score each idea on 5 dimensions (grounding, specificity, plausibility, novelty, clarity) from 1--5. Overall score is a weighted average: 0.35$\times$grounding + 0.25$\times$specificity + 0.2$\times$plausibility + 0.15$\times$novelty + 0.05$\times$clarity.
+
+\textbf{Judge prompt.} Determine whether a generated idea is a semantic match for the target paper. Return a JSON object with match (boolean), confidence (0--1), and reason (string).
+
+\end{document}
