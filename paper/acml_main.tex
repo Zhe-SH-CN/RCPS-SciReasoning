@@ -169,6 +169,8 @@ BCS-50 fails despite generating 5$\times$ more candidates. We hypothesize severa
 \item \textbf{Distribution shift.} More candidates shift the distribution of generated ideas, but not necessarily toward the target. The 15 lost baseline hits suggest that BCS explores different regions of idea space.
 \end{enumerate}
 
+The distribution shift hypothesis is supported by the overlap analysis. BCS-50 and Direct-10 share only 5 of 31 hits, suggesting they explore fundamentally different regions of idea space. This is not simply noise---the judge confidence is nearly identical for both methods (hit mean $\approx$ 0.868), indicating that both methods produce ideas of similar quality, but in different directions.
+
 \subsection{Enriched vs.\ Title-Only Judging}
 
 The 11.7pp drop from title-only to enriched judging is a major finding. Title-only judging likely overestimates performance because:
@@ -178,11 +180,23 @@ The 11.7pp drop from title-only to enriched judging is a major finding. Title-on
 \item The enriched contribution reveals the actual technical contribution, making the judging task more precise.
 \end{enumerate}
 
-This finding has implications for all work using Sci-Reasoning: results reported under title-only judging may be significantly overestimated.
+This finding has implications for all work using Sci-Reasoning: results reported under title-only judging may be significantly overestimated. We recommend that future work always use enriched contributions for judging.
 
 \subsection{Implications for Related Work}
 
 Our results cast doubt on claims that candidate expansion improves scientific ideation. Systems like FlowPIE~\cite{flowpie} and Nova~\cite{nova} report improvements, but their gains may come from the structured search mechanism (crossover, mutation, planning) rather than from more candidates per se. Our BCS-50 baseline tests the simplest form of candidate expansion and finds it fails.
+
+This suggests that the key to improving scientific ideation is not generating more candidates, but generating \emph{better} candidates through structured context or evolutionary mechanisms. Our negative result provides a baseline against which future structured approaches can be measured.
+
+\subsection{Case Studies}
+
+To illustrate the failure modes, we examine specific targets where BCS-50 fails but Direct-10 succeeds, and vice versa.
+
+\textbf{BCS-50 loses baseline hits.} On targets where Direct-10 succeeds, BCS-50 often generates candidates that are tangentially related but miss the core contribution. The scoring step may reward grounding and specificity over the kind of creative leap needed to match the target.
+
+\textbf{BCS-50 finds new hits.} On targets where Direct-10 fails, BCS-50 sometimes finds the target through the diversity of its candidate pool. This suggests that for some targets, the direct generation prompt gets stuck in a local region of idea space, while the expanded pool explores more broadly.
+
+\textbf{Net negative effect.} The loss of 15 baseline hits outweighs the gain of 11 new hits, resulting in a net loss of 4 hits. This suggests that the current scoring and selection mechanism is not effective at preserving baseline hits while adding new ones.
 
 \section{Discussion}\label{sec:discussion}
 
