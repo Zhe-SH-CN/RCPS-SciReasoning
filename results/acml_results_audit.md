@@ -1,16 +1,34 @@
 # ACML Results Audit
 
-Generated: 2026-06-12T00:46:54.496680+00:00
+Generated: 2026-06-13T09:00:41.469988+00:00
 
 ## Method Results
 
 | Method | Targets | Completed | Hits | Hit@10 | 95% CI | Full-set |
 |---|---:|---:|---:|---:|---|---|
 | baseline | 77 | 77 | 29 | 37.7% | [27.3, 48.1] | yes |
+| baseline_enriched | 77 | 77 | 20 | 26.0% | [16.9, 36.4] | yes |
+| bcs50 | 77 | 77 | 16 | 20.8% | [11.7, 29.9] | yes |
 | pgcr | 77 | 77 | 22 | 28.6% | [18.2, 39.0] | yes |
 | vanilla_expansion | 48 | 48 | 16 | 33.3% | [20.8, 47.9] | NO (48/77) |
 
 ## Hit-Set Overlaps
+
+### baseline_vs_baseline_enriched
+
+- Method A hits: 29
+- Method B hits: 20
+- Common hits: 10
+- Only in A: 19
+- Only in B: 10
+
+### baseline_vs_bcs50
+
+- Method A hits: 29
+- Method B hits: 16
+- Common hits: 6
+- Only in A: 23
+- Only in B: 10
 
 ### baseline_vs_pgcr
 
@@ -27,6 +45,46 @@ Generated: 2026-06-12T00:46:54.496680+00:00
 - Common hits: 0
 - Only in A: 29
 - Only in B: 16
+
+### baseline_enriched_vs_bcs50
+
+- Method A hits: 20
+- Method B hits: 16
+- Common hits: 5
+- Only in A: 15
+- Only in B: 11
+
+### baseline_enriched_vs_pgcr
+
+- Method A hits: 20
+- Method B hits: 22
+- Common hits: 4
+- Only in A: 16
+- Only in B: 18
+
+### baseline_enriched_vs_vanilla_expansion
+
+- Method A hits: 20
+- Method B hits: 16
+- Common hits: 4
+- Only in A: 16
+- Only in B: 12
+
+### bcs50_vs_pgcr
+
+- Method A hits: 16
+- Method B hits: 22
+- Common hits: 4
+- Only in A: 12
+- Only in B: 18
+
+### bcs50_vs_vanilla_expansion
+
+- Method A hits: 16
+- Method B hits: 16
+- Common hits: 5
+- Only in A: 11
+- Only in B: 11
 
 ### pgcr_vs_vanilla_expansion
 
@@ -45,6 +103,8 @@ Generated: 2026-06-12T00:46:54.496680+00:00
 ## Token Usage
 
 - baseline: 1,096,918 tokens
+- baseline_enriched: 810,522 tokens
+- bcs50: 853,688 tokens
 - pgcr: 814,247 tokens
 - vanilla_expansion: 507,478 tokens
 
@@ -57,6 +117,8 @@ Generated: 2026-06-12T00:46:54.496680+00:00
 ## Judge Confidence
 
 - baseline: mean=0.106, hit_mean=0.836, miss_mean=0.069
+- baseline_enriched: mean=0.069, hit_mean=0.869, miss_mean=0.044
+- bcs50: mean=0.069, hit_mean=0.868, miss_mean=0.048
 - pgcr: mean=0.083, hit_mean=0.84, miss_mean=0.058
 - vanilla_expansion: mean=0.114, hit_mean=0.841, miss_mean=0.087
 
@@ -75,6 +137,8 @@ Generated: 2026-06-12T00:46:54.496680+00:00
 ## Recomputation Notes
 
 - ✅ baseline: reported hits match recomputed
+- ✅ baseline_enriched: reported hits match recomputed
+- ✅ bcs50: reported hits match recomputed
 - ✅ pgcr: reported hits match recomputed
 - ✅ vanilla_expansion: reported hits match recomputed
 

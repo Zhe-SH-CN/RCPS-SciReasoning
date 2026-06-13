@@ -31,6 +31,8 @@ LOGS_DIR = PROJECT_ROOT / "logs"
 # Result files to audit
 RESULT_FILES = {
     "baseline": RESULTS_DIR / "baseline_mimo.json",
+    "baseline_enriched": RESULTS_DIR / "acml_direct10_rejudge_mimo_v25pro.json",
+    "bcs50": RESULTS_DIR / "bcs50_eval_mimo_v25pro.json",
     "pgcr": RESULTS_DIR / "pgcr_full.json",
     "vanilla_expansion": RESULTS_DIR / "vanilla_expansion_eval.json",
 }
