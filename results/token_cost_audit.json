@@ -1,0 +1,24 @@
+{
+  "timestamp": "2026-06-14T00:39:45.207409",
+  "direct10": {
+    "generation": 1096918,
+    "enriched_rejudge": 810522,
+    "total": 1907440,
+    "tokens_per_target": 24772
+  },
+  "bcs50": {
+    "generation": 1644589,
+    "scoring": 1605338,
+    "evaluation": 853688,
+    "total": 4103615,
+    "tokens_per_target": 53294
+  },
+  "pgcr": {
+    "generation": 0,
+    "scoring": 9480185,
+    "evaluation": 854831,
+    "total": 10335016,
+    "tokens_per_target": 134221
+  },
+  "bcs50_vs_direct10_ratio": 2.15
+}

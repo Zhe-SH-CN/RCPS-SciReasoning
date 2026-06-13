@@ -1,0 +1,340 @@
+{
+  "timestamp": "2026-06-14T00:28:05.612175",
+  "model": "mimo-v2.5-pro",
+  "total_targets": 8,
+  "total_judgments": 16,
+  "parse_ok": 16,
+  "parse_fail": 0,
+  "parse_rate": 100.0,
+  "label_changes": 11,
+  "results": [
+    {
+      "target_id": "8P3QNSckMp",
+      "category": "direct_only",
+      "target_title": "A Clean Slate for Offline Reinforcement Learning",
+      "d10_hit": true,
+      "bcs_hit": false,
+      "judgments": [
+        {
+          "match": false,
+          "confidence": 0.3,
+          "reason": "Core differs: unification and new algorithms versus meta-learning for algorithm selection.",
+          "raw_response": "{\"match\": false, \"confidence\": 0.3, \"reason\": \"Core differs: unification and new algorithms versus meta-learning for algorithm selection.\"}",
+          "raw_clean": "{\"match\": false, \"confidence\": 0.3, \"reason\": \"Core differs: unification and new algorithms versus meta-learning for algorithm selection.\"}",
+          "parse_status": "ok",
+          "input_tokens": 669,
+          "output_tokens": 830,
+          "finish_reason": "stop",
+          "elapsed_seconds": 25.44,
+          "source": "direct",
+          "old_match": false,
+          "new_match": false,
+          "label_changed": false
+        },
+        {
+          "match": false,
+          "confidence": 0.8,
+          "reason": "Target paper core is evaluation and algorithmic unification; generated idea shifts to fairness constraints.",
+          "raw_response": "{\"match\": false, \"confidence\": 0.8, \"reason\": \"Target paper core is evaluation and algorithmic unification; generated idea shifts to fairness constraints.\"}",
+          "raw_clean": "{\"match\": false, \"confidence\": 0.8, \"reason\": \"Target paper core is evaluation and algorithmic unification; generated idea shifts to fairness constraints.\"}",
+          "parse_status": "ok",
+          "input_tokens": 648,
+          "output_tokens": 841,
+          "finish_reason": "stop",
+          "elapsed_seconds": 24.06,
+          "source": "bcs",
+          "old_match": false,
+          "new_match": false,
+          "label_changed": false
+        }
+      ]
+    },
+    {
+      "target_id": "MrUsZfQ9pC",
+      "category": "direct_only",
+      "target_title": "Identifiability of Deep Polynomial Neural Networks",
+      "d10_hit": true,
+      "bcs_hit": false,
+      "judgments": [
+        {
+          "match": true,
+          "confidence": 0.9,
+          "reason": "Both focus on identifiability of polynomial neural networks, extending from algebraic to statistical guarantees.",
+          "raw_response": "{\"match\": true, \"confidence\": 0.9, \"reason\": \"Both focus on identifiability of polynomial neural networks, extending from algebraic to statistical guarantees.\"}",
+          "raw_clean": "{\"match\": true, \"confidence\": 0.9, \"reason\": \"Both focus on identifiability of polynomial neural networks, extending from algebraic to statistical guarantees.\"}",
+          "parse_status": "ok",
+          "input_tokens": 647,
+          "output_tokens": 860,
+          "finish_reason": "stop",
+          "elapsed_seconds": 20.7,
+          "source": "direct",
+          "old_match": true,
+          "new_match": true,
+          "label_changed": false
+        },
+        {
+          "match": true,
+          "confidence": 0.8,
+          "reason": "Algorithm design directly builds on theoretical identifiability results",
+          "raw_response": "{\"match\": true, \"confidence\": 0.8, \"reason\": \"Algorithm design directly builds on theoretical identifiability results\"}",
+          "raw_clean": "{\"match\": true, \"confidence\": 0.8, \"reason\": \"Algorithm design directly builds on theoretical identifiability results\"}",
+          "parse_status": "ok",
+          "input_tokens": 582,
+          "output_tokens": 780,
+          "finish_reason": "stop",
+          "elapsed_seconds": 23.6,
+          "source": "bcs",
+          "old_match": false,
+          "new_match": true,
+          "label_changed": true
+        }
+      ]
+    },
+    {
+      "target_id": "eIDa6pd9iQ",
+      "category": "bcs_only",
+      "target_title": "Auto-Compressing Networks",
+      "d10_hit": false,
+      "bcs_hit": true,
+      "judgments": [
+        {
+          "match": true,
+          "confidence": 0.9,
+          "reason": "Direct extension of ACN with learned connections, enhancing the same core research direction.",
+          "raw_response": "{\"match\": true, \"confidence\": 0.9, \"reason\": \"Direct extension of ACN with learned connections, enhancing the same core research direction.\"}",
+          "raw_clean": "{\"match\": true, \"confidence\": 0.9, \"reason\": \"Direct extension of ACN with learned connections, enhancing the same core research direction.\"}",
+          "parse_status": "ok",
+          "input_tokens": 615,
+          "output_tokens": 873,
+          "finish_reason": "stop",
+          "elapsed_seconds": 23.59,
+          "source": "direct",
+          "old_match": false,
+          "new_match": true,
+          "label_changed": true
+        },
+        {
+          "match": false,
+          "confidence": 0.8,
+          "reason": "Target introduces ACN architecture; generated applies ACN to unsupervised learning, a different research direction.",
+          "raw_response": "{\"match\": false, \"confidence\": 0.8, \"reason\": \"Target introduces ACN architecture; generated applies ACN to unsupervised learning, a different research direction.\"}",
+          "raw_clean": "{\"match\": false, \"confidence\": 0.8, \"reason\": \"Target introduces ACN architecture; generated applies ACN to unsupervised learning, a different research direction.\"}",
+          "parse_status": "ok",
+          "input_tokens": 641,
+          "output_tokens": 1314,
+          "finish_reason": "stop",
+          "elapsed_seconds": 36.21,
+          "source": "bcs",
+          "old_match": false,
+          "new_match": false,
+          "label_changed": false
+        }
+      ]
+    },
+    {
+      "target_id": "uWj4s7rMnR",
+      "category": "bcs_only",
+      "target_title": "Mean Flows for One-step Generative Modeling",
+      "d10_hit": false,
+      "bcs_hit": true,
+      "judgments": [
+        {
+          "match": true,
+          "confidence": 0.9,
+          "reason": "Both focus on mean velocity for one-step generative modeling, with generated idea extending to hierarchical approach.",
+          "raw_response": "{\"match\": true, \"confidence\": 0.9, \"reason\": \"Both focus on mean velocity for one-step generative modeling, with generated idea extending to hierarchical approach.\"}",
+          "raw_clean": "{\"match\": true, \"confidence\": 0.9, \"reason\": \"Both focus on mean velocity for one-step generative modeling, with generated idea extending to hierarchical approach.\"}",
+          "parse_status": "ok",
+          "input_tokens": 654,
+          "output_tokens": 787,
+          "finish_reason": "stop",
+          "elapsed_seconds": 19.3,
+          "source": "direct",
+          "old_match": false,
+          "new_match": true,
+          "label_changed": true
+        },
+        {
+          "match": true,
+          "confidence": 0.9,
+          "reason": "Both focus on mean velocity for generative modeling; generated idea extends MeanFlow directly.",
+          "raw_response": "{\"match\": true, \"confidence\": 0.9, \"reason\": \"Both focus on mean velocity for generative modeling; generated idea extends MeanFlow directly.\"}",
+          "raw_clean": "{\"match\": true, \"confidence\": 0.9, \"reason\": \"Both focus on mean velocity for generative modeling; generated idea extends MeanFlow directly.\"}",
+          "parse_status": "ok",
+          "input_tokens": 592,
+          "output_tokens": 872,
+          "finish_reason": "stop",
+          "elapsed_seconds": 23.41,
+          "source": "bcs",
+          "old_match": true,
+          "new_match": true,
+          "label_changed": false
+        }
+      ]
+    },
+    {
+      "target_id": "zIzZxDsNNP",
+      "category": "overlap",
+      "target_title": "PhySense: Sensor Placement Optimization for Accurate Physics",
+      "d10_hit": true,
+      "bcs_hit": true,
+      "judgments": [
+        {
+          "match": true,
+          "confidence": 0.9,
+          "reason": "Extends PhySense framework, sharing core sensor placement optimization for reconstruction.",
+          "raw_response": "{\"match\": true, \"confidence\": 0.9, \"reason\": \"Extends PhySense framework, sharing core sensor placement optimization for reconstruction.\"}",
+          "raw_clean": "{\"match\": true, \"confidence\": 0.9, \"reason\": \"Extends PhySense framework, sharing core sensor placement optimization for reconstruction.\"}",
+          "parse_status": "ok",
+          "input_tokens": 575,
+          "output_tokens": 738,
+          "finish_reason": "stop",
+          "elapsed_seconds": 19.15,
+          "source": "direct",
+          "old_match": false,
+          "new_match": true,
+          "label_changed": true
+        },
+        {
+          "match": true,
+          "confidence": 0.95,
+          "reason": "Both focus on optimizing sensor placements for physics sensing using gradient-based approaches.",
+          "raw_response": "{\"match\": true, \"confidence\": 0.95, \"reason\": \"Both focus on optimizing sensor placements for physics sensing using gradient-based approaches.\"}",
+          "raw_clean": "{\"match\": true, \"confidence\": 0.95, \"reason\": \"Both focus on optimizing sensor placements for physics sensing using gradient-based approaches.\"}",
+          "parse_status": "ok",
+          "input_tokens": 633,
+          "output_tokens": 656,
+          "finish_reason": "stop",
+          "elapsed_seconds": 17.1,
+          "source": "bcs",
+          "old_match": false,
+          "new_match": true,
+          "label_changed": true
+        }
+      ]
+    },
+    {
+      "target_id": "RxkCwOKVKa",
+      "category": "overlap",
+      "target_title": "Breaking the Performance Ceiling in Reinforcement Learning r",
+      "d10_hit": true,
+      "bcs_hit": true,
+      "judgments": [
+        {
+          "match": true,
+          "confidence": 0.85,
+          "reason": "Both focus on inference-time compute optimization for RL performance gains.",
+          "raw_response": "{\"match\": true, \"confidence\": 0.85, \"reason\": \"Both focus on inference-time compute optimization for RL performance gains.\"}",
+          "raw_clean": "{\"match\": true, \"confidence\": 0.85, \"reason\": \"Both focus on inference-time compute optimization for RL performance gains.\"}",
+          "parse_status": "ok",
+          "input_tokens": 627,
+          "output_tokens": 838,
+          "finish_reason": "stop",
+          "elapsed_seconds": 22.94,
+          "source": "direct",
+          "old_match": false,
+          "new_match": true,
+          "label_changed": true
+        },
+        {
+          "match": true,
+          "confidence": 0.8,
+          "reason": "Both propose inference-time candidate generation and selection to enhance RL performance beyond training limits.",
+          "raw_response": "{\"match\": true, \"confidence\": 0.8, \"reason\": \"Both propose inference-time candidate generation and selection to enhance RL performance beyond training limits.\"}",
+          "raw_clean": "{\"match\": true, \"confidence\": 0.8, \"reason\": \"Both propose inference-time candidate generation and selection to enhance RL performance beyond training limits.\"}",
+          "parse_status": "ok",
+          "input_tokens": 609,
+          "output_tokens": 815,
+          "finish_reason": "stop",
+          "elapsed_seconds": 18.51,
+          "source": "bcs",
+          "old_match": false,
+          "new_match": true,
+          "label_changed": true
+        }
+      ]
+    },
+    {
+      "target_id": "i5WnXNjwbR",
+      "category": "both_miss",
+      "target_title": "ImageNet-trained CNNs are not biased towards texture: Revisi",
+      "d10_hit": false,
+      "bcs_hit": false,
+      "judgments": [
+        {
+          "match": true,
+          "confidence": 0.85,
+          "reason": "Same core suppression framework, but extended from evaluation to proactive regularization.",
+          "raw_response": "{\"match\": true, \"confidence\": 0.85, \"reason\": \"Same core suppression framework, but extended from evaluation to proactive regularization.\"}",
+          "raw_clean": "{\"match\": true, \"confidence\": 0.85, \"reason\": \"Same core suppression framework, but extended from evaluation to proactive regularization.\"}",
+          "parse_status": "ok",
+          "input_tokens": 616,
+          "output_tokens": 225,
+          "finish_reason": "stop",
+          "elapsed_seconds": 9.08,
+          "source": "direct",
+          "old_match": false,
+          "new_match": true,
+          "label_changed": true
+        },
+        {
+          "match": true,
+          "confidence": 0.9,
+          "reason": "Both analyze CNN cue reliance via suppression, with idea extending to hierarchical layer study.",
+          "raw_response": "{\"match\": true, \"confidence\": 0.9, \"reason\": \"Both analyze CNN cue reliance via suppression, with idea extending to hierarchical layer study.\"}",
+          "raw_clean": "{\"match\": true, \"confidence\": 0.9, \"reason\": \"Both analyze CNN cue reliance via suppression, with idea extending to hierarchical layer study.\"}",
+          "parse_status": "ok",
+          "input_tokens": 565,
+          "output_tokens": 681,
+          "finish_reason": "stop",
+          "elapsed_seconds": 15.69,
+          "source": "bcs",
+          "old_match": false,
+          "new_match": true,
+          "label_changed": true
+        }
+      ]
+    },
+    {
+      "target_id": "U8BwT6Rmw4",
+      "category": "both_miss",
+      "target_title": "An Optimized Franz-Parisi Criterion and its Equivalence with",
+      "d10_hit": false,
+      "bcs_hit": false,
+      "judgments": [
+        {
+          "match": true,
+          "confidence": 0.8,
+          "reason": "Both core on refining FP and proving SQ equivalence; generated extends to estimation.",
+          "raw_response": "{\"match\": true, \"confidence\": 0.8, \"reason\": \"Both core on refining FP and proving SQ equivalence; generated extends to estimation.\"}",
+          "raw_clean": "{\"match\": true, \"confidence\": 0.8, \"reason\": \"Both core on refining FP and proving SQ equivalence; generated extends to estimation.\"}",
+          "parse_status": "ok",
+          "input_tokens": 624,
+          "output_tokens": 1087,
+          "finish_reason": "stop",
+          "elapsed_seconds": 27.7,
+          "source": "direct",
+          "old_match": false,
+          "new_match": true,
+          "label_changed": true
+        },
+        {
+          "match": true,
+          "confidence": 0.9,
+          "reason": "Both refine FP criterion to establish equivalence with SQ lower bounds.",
+          "raw_response": "{\"match\": true, \"confidence\": 0.9, \"reason\": \"Both refine FP criterion to establish equivalence with SQ lower bounds.\"}",
+          "raw_clean": "{\"match\": true, \"confidence\": 0.9, \"reason\": \"Both refine FP criterion to establish equivalence with SQ lower bounds.\"}",
+          "parse_status": "ok",
+          "input_tokens": 616,
+          "output_tokens": 853,
+          "finish_reason": "stop",
+          "elapsed_seconds": 21.31,
+          "source": "bcs",
+          "old_match": false,
+          "new_match": true,
+          "label_changed": true
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,212 @@
+{
+  "timestamp": "2026-06-14T00:41:07.736544",
+  "methods": {
+    "direct10": {
+      "hits": 20,
+      "total": 77,
+      "hit_at_10": 26.0,
+      "ci": {
+        "low": 16.9,
+        "high": 36.4,
+        "point": 26.0
+      },
+      "parse": {
+        "total": 770,
+        "parse_ok": 1,
+        "parse_fail": 769,
+        "parse_rate": 0.1,
+        "empty_reason": 705,
+        "confidence_zero": 706
+      },
+      "hit_ids": [
+        "8P3QNSckMp",
+        "F0JzotXYgC",
+        "ImpizBSKcu",
+        "JFygzwx8SJ",
+        "KurYdcCbjv",
+        "MrUsZfQ9pC",
+        "Q3qAsZAEZw",
+        "R73ybUciQF",
+        "RxkCwOKVKa",
+        "XoN10bZtR9",
+        "Zd6VyjmN1S",
+        "aLhA7AYLLR",
+        "aUAG1WS7J2",
+        "efOq8wHH9o",
+        "jMhRbV47pS",
+        "jzPQRbGkAq",
+        "koEALFNBj1",
+        "qYkhCah8OZ",
+        "rMhQBlhh4c",
+        "zIzZxDsNNP"
+      ]
+    },
+    "bcs50": {
+      "hits": 16,
+      "total": 77,
+      "hit_at_10": 20.8,
+      "ci": {
+        "low": 11.7,
+        "high": 29.9,
+        "point": 20.8
+      },
+      "parse": {
+        "total": 770,
+        "parse_ok": 0,
+        "parse_fail": 770,
+        "parse_rate": 0.0,
+        "empty_reason": 698,
+        "confidence_zero": 699
+      },
+      "paired_vs_direct10": {
+        "wins": 11,
+        "losses": 15,
+        "ties": 5,
+        "win_ids": [
+          "1b7whO4SfY",
+          "OzdAnGHEPx",
+          "Q6IyUpBmrG",
+          "eIDa6pd9iQ",
+          "gxfusMqPIs",
+          "m7MD0sa8Re",
+          "rMdf8jhLR7",
+          "s6YHno8Ke3",
+          "s6k9l5yX8e",
+          "sYK4yPDuT1",
+          "uWj4s7rMnR"
+        ],
+        "loss_ids": [
+          "8P3QNSckMp",
+          "F0JzotXYgC",
+          "ImpizBSKcu",
+          "JFygzwx8SJ",
+          "MrUsZfQ9pC",
+          "Q3qAsZAEZw",
+          "XoN10bZtR9",
+          "Zd6VyjmN1S",
+          "aLhA7AYLLR",
+          "aUAG1WS7J2",
+          "efOq8wHH9o",
+          "jMhRbV47pS",
+          "jzPQRbGkAq",
+          "qYkhCah8OZ",
+          "rMhQBlhh4c"
+        ],
+        "tie_ids": [
+          "KurYdcCbjv",
+          "R73ybUciQF",
+          "RxkCwOKVKa",
+          "koEALFNBj1",
+          "zIzZxDsNNP"
+        ]
+      },
+      "hit_ids": [
+        "1b7whO4SfY",
+        "KurYdcCbjv",
+        "OzdAnGHEPx",
+        "Q6IyUpBmrG",
+        "R73ybUciQF",
+        "RxkCwOKVKa",
+        "eIDa6pd9iQ",
+        "gxfusMqPIs",
+        "koEALFNBj1",
+        "m7MD0sa8Re",
+        "rMdf8jhLR7",
+        "s6YHno8Ke3",
+        "s6k9l5yX8e",
+        "sYK4yPDuT1",
+        "uWj4s7rMnR",
+        "zIzZxDsNNP"
+      ]
+    },
+    "pgcr": {
+      "hits": 14,
+      "total": 77,
+      "hit_at_10": 18.2,
+      "ci": {
+        "low": 10.4,
+        "high": 27.3,
+        "point": 18.2
+      },
+      "parse": {
+        "total": 770,
+        "parse_ok": 0,
+        "parse_fail": 770,
+        "parse_rate": 0.0,
+        "empty_reason": 706,
+        "confidence_zero": 709
+      },
+      "paired_vs_direct10": {
+        "wins": 11,
+        "losses": 17,
+        "ties": 3,
+        "win_ids": [
+          "4OsgYD7em5",
+          "NM8Apk61NA",
+          "QN0E0KX2LM",
+          "RF3miSqdXa",
+          "eIDa6pd9iQ",
+          "fohuurA03P",
+          "gxfusMqPIs",
+          "iydmH9boLb",
+          "knPz7gtjPW",
+          "oGmROC4e4W",
+          "rtG7n93Ru8"
+        ],
+        "loss_ids": [
+          "8P3QNSckMp",
+          "F0JzotXYgC",
+          "ImpizBSKcu",
+          "KurYdcCbjv",
+          "MrUsZfQ9pC",
+          "Q3qAsZAEZw",
+          "XoN10bZtR9",
+          "Zd6VyjmN1S",
+          "aLhA7AYLLR",
+          "aUAG1WS7J2",
+          "efOq8wHH9o",
+          "jMhRbV47pS",
+          "jzPQRbGkAq",
+          "koEALFNBj1",
+          "qYkhCah8OZ",
+          "rMhQBlhh4c",
+          "zIzZxDsNNP"
+        ],
+        "tie_ids": [
+          "JFygzwx8SJ",
+          "R73ybUciQF",
+          "RxkCwOKVKa"
+        ]
+      },
+      "hit_ids": [
+        "4OsgYD7em5",
+        "JFygzwx8SJ",
+        "NM8Apk61NA",
+        "QN0E0KX2LM",
+        "R73ybUciQF",
+        "RF3miSqdXa",
+        "RxkCwOKVKa",
+        "eIDa6pd9iQ",
+        "fohuurA03P",
+        "gxfusMqPIs",
+        "iydmH9boLb",
+        "knPz7gtjPW",
+        "oGmROC4e4W",
+        "rtG7n93Ru8"
+      ]
+    }
+  },
+  "union": {
+    "hits": 40,
+    "common_hits": 2,
+    "d10_only": 14,
+    "bcs_only": 9,
+    "pgcr_only": 9
+  },
+  "token_costs": {
+    "direct10": 1907440,
+    "bcs50": 4103615,
+    "pgcr": 10335016
+  },
+  "oracle_warning": "Union of all methods has 40 hits, more than any single method. Do not report as a fair method."
+}
