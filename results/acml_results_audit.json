@@ -1,5 +1,5 @@
 {
-  "generated": "2026-06-13T09:00:41.469988+00:00",
+  "generated": "2026-06-13T12:43:29.704817+00:00",
   "result_files": {
     "baseline": {
       "path": "baseline_mimo.json",
@@ -53,6 +53,20 @@
     },
     "pgcr": {
       "path": "pgcr_full.json",
+      "status": "found",
+      "top_keys": [
+        "run_id",
+        "method",
+        "judge_model",
+        "total_targets",
+        "completed",
+        "hits",
+        "hit_at_10",
+        "total_tokens"
+      ]
+    },
+    "pgcr_enriched": {
+      "path": "pgcr_enriched_eval.json",
       "status": "found",
       "top_keys": [
         "run_id",
@@ -209,6 +223,33 @@
         "point": 28.6
       }
     },
+    "pgcr_enriched": {
+      "total_targets": 77,
+      "completed": 77,
+      "hits": 14,
+      "hits_recomputed": 14,
+      "hit_at_10": 18.2,
+      "hit_at_10_recomputed": 18.2,
+      "is_full_set": true,
+      "candidates": {},
+      "judge_confidence": {
+        "count": 770,
+        "mean": 0.059,
+        "min": 0.0,
+        "max": 0.95,
+        "hit_mean": 0.856,
+        "miss_mean": 0.042
+      },
+      "metadata_warnings": [
+        "Missing top-level keys: {'model'}"
+      ],
+      "total_tokens": 854831,
+      "bootstrap_95ci": {
+        "low": 10.4,
+        "high": 27.3,
+        "point": 18.2
+      }
+    },
     "vanilla_expansion": {
       "total_targets": 48,
       "completed": 48,
@@ -269,6 +310,13 @@
       "a_hits": 29,
       "b_hits": 22
     },
+    "baseline_vs_pgcr_enriched": {
+      "common_hits": 7,
+      "only_a": 22,
+      "only_b": 7,
+      "a_hits": 29,
+      "b_hits": 14
+    },
     "baseline_vs_vanilla_expansion": {
       "common_hits": 0,
       "only_a": 29,
@@ -290,6 +338,13 @@
       "a_hits": 20,
       "b_hits": 22
     },
+    "baseline_enriched_vs_pgcr_enriched": {
+      "common_hits": 3,
+      "only_a": 17,
+      "only_b": 11,
+      "a_hits": 20,
+      "b_hits": 14
+    },
     "baseline_enriched_vs_vanilla_expansion": {
       "common_hits": 4,
       "only_a": 16,
@@ -304,6 +359,13 @@
       "a_hits": 16,
       "b_hits": 22
     },
+    "bcs50_vs_pgcr_enriched": {
+      "common_hits": 4,
+      "only_a": 12,
+      "only_b": 10,
+      "a_hits": 16,
+      "b_hits": 14
+    },
     "bcs50_vs_vanilla_expansion": {
       "common_hits": 5,
       "only_a": 11,
@@ -311,11 +373,25 @@
       "a_hits": 16,
       "b_hits": 16
     },
+    "pgcr_vs_pgcr_enriched": {
+      "common_hits": 7,
+      "only_a": 15,
+      "only_b": 7,
+      "a_hits": 22,
+      "b_hits": 14
+    },
     "pgcr_vs_vanilla_expansion": {
       "common_hits": 2,
       "only_a": 20,
       "only_b": 14,
       "a_hits": 22,
+      "b_hits": 16
+    },
+    "pgcr_enriched_vs_vanilla_expansion": {
+      "common_hits": 3,
+      "only_a": 11,
+      "only_b": 13,
+      "a_hits": 14,
       "b_hits": 16
     }
   },
@@ -360,13 +436,13 @@
     "pgcr_evaluation": {
       "stage": "evaluation",
       "started": "2026-06-11T01:46:37.398510",
-      "targets_completed": 125,
-      "total_input_tokens": 702983,
-      "total_output_tokens": 618742,
-      "total_api_calls": 1250,
-      "hits": 38,
-      "hit_at_10": 30.4,
-      "last_updated": "2026-06-11T21:28:56.268838"
+      "targets_completed": 202,
+      "total_input_tokens": 1172015,
+      "total_output_tokens": 1004541,
+      "total_api_calls": 2020,
+      "hits": 52,
+      "hit_at_10": 25.7,
+      "last_updated": "2026-06-13T20:42:27.474943"
     },
     "bcs50_generation": {
       "stage": "generation",
@@ -382,6 +458,7 @@
   },
   "metadata_warnings": [
     "[pgcr] Missing top-level keys: {'model'}",
+    "[pgcr_enriched] Missing top-level keys: {'model'}",
     "[vanilla_expansion] Missing top-level keys: {'model'}"
   ],
   "enrichment_status": {

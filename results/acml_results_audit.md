@@ -1,6 +1,6 @@
 # ACML Results Audit
 
-Generated: 2026-06-13T09:00:41.469988+00:00
+Generated: 2026-06-13T12:43:29.704817+00:00
 
 ## Method Results
 
@@ -10,6 +10,7 @@ Generated: 2026-06-13T09:00:41.469988+00:00
 | baseline_enriched | 77 | 77 | 20 | 26.0% | [16.9, 36.4] | yes |
 | bcs50 | 77 | 77 | 16 | 20.8% | [11.7, 29.9] | yes |
 | pgcr | 77 | 77 | 22 | 28.6% | [18.2, 39.0] | yes |
+| pgcr_enriched | 77 | 77 | 14 | 18.2% | [10.4, 27.3] | yes |
 | vanilla_expansion | 48 | 48 | 16 | 33.3% | [20.8, 47.9] | NO (48/77) |
 
 ## Hit-Set Overlaps
@@ -38,6 +39,14 @@ Generated: 2026-06-13T09:00:41.469988+00:00
 - Only in A: 18
 - Only in B: 11
 
+### baseline_vs_pgcr_enriched
+
+- Method A hits: 29
+- Method B hits: 14
+- Common hits: 7
+- Only in A: 22
+- Only in B: 7
+
 ### baseline_vs_vanilla_expansion
 
 - Method A hits: 29
@@ -62,6 +71,14 @@ Generated: 2026-06-13T09:00:41.469988+00:00
 - Only in A: 16
 - Only in B: 18
 
+### baseline_enriched_vs_pgcr_enriched
+
+- Method A hits: 20
+- Method B hits: 14
+- Common hits: 3
+- Only in A: 17
+- Only in B: 11
+
 ### baseline_enriched_vs_vanilla_expansion
 
 - Method A hits: 20
@@ -78,6 +95,14 @@ Generated: 2026-06-13T09:00:41.469988+00:00
 - Only in A: 12
 - Only in B: 18
 
+### bcs50_vs_pgcr_enriched
+
+- Method A hits: 16
+- Method B hits: 14
+- Common hits: 4
+- Only in A: 12
+- Only in B: 10
+
 ### bcs50_vs_vanilla_expansion
 
 - Method A hits: 16
@@ -86,6 +111,14 @@ Generated: 2026-06-13T09:00:41.469988+00:00
 - Only in A: 11
 - Only in B: 11
 
+### pgcr_vs_pgcr_enriched
+
+- Method A hits: 22
+- Method B hits: 14
+- Common hits: 7
+- Only in A: 15
+- Only in B: 7
+
 ### pgcr_vs_vanilla_expansion
 
 - Method A hits: 22
@@ -93,6 +126,14 @@ Generated: 2026-06-13T09:00:41.469988+00:00
 - Common hits: 2
 - Only in A: 20
 - Only in B: 14
+
+### pgcr_enriched_vs_vanilla_expansion
+
+- Method A hits: 14
+- Method B hits: 16
+- Common hits: 3
+- Only in A: 11
+- Only in B: 13
 
 ## Oracle Warnings
 
@@ -106,6 +147,7 @@ Generated: 2026-06-13T09:00:41.469988+00:00
 - baseline_enriched: 810,522 tokens
 - bcs50: 853,688 tokens
 - pgcr: 814,247 tokens
+- pgcr_enriched: 854,831 tokens
 - vanilla_expansion: 507,478 tokens
 
 ## Candidate Counts
@@ -120,11 +162,13 @@ Generated: 2026-06-13T09:00:41.469988+00:00
 - baseline_enriched: mean=0.069, hit_mean=0.869, miss_mean=0.044
 - bcs50: mean=0.069, hit_mean=0.868, miss_mean=0.048
 - pgcr: mean=0.083, hit_mean=0.84, miss_mean=0.058
+- pgcr_enriched: mean=0.059, hit_mean=0.856, miss_mean=0.042
 - vanilla_expansion: mean=0.114, hit_mean=0.841, miss_mean=0.087
 
 ## Metadata Warnings
 
 - [pgcr] Missing top-level keys: {'model'}
+- [pgcr_enriched] Missing top-level keys: {'model'}
 - [vanilla_expansion] Missing top-level keys: {'model'}
 
 ## Enrichment Status
@@ -140,5 +184,6 @@ Generated: 2026-06-13T09:00:41.469988+00:00
 - ✅ baseline_enriched: reported hits match recomputed
 - ✅ bcs50: reported hits match recomputed
 - ✅ pgcr: reported hits match recomputed
+- ✅ pgcr_enriched: reported hits match recomputed
 - ✅ vanilla_expansion: reported hits match recomputed
 
