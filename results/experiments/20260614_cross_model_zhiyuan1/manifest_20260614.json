@@ -13,6 +13,19 @@
       "smoke_test": "smoke_direct10_glm-51_selfjudge_3t_20260614.json",
       "smoke_report": "smoke_report_20260614.md"
     },
+    "phase_0b_protocol_repair": {
+      "status": "PASS",
+      "leakage_audit_json": "../../prompt_context_leakage_audit_2026-06-14.json",
+      "leakage_audit_md": "../../prompt_context_leakage_audit_2026-06-14.md",
+      "clean_smoke_test": "smoke_direct10_glm-51_selfjudge_cleanctx_3t_20260614.json",
+      "clean_smoke_report": "phase0b_protocol_leakage_repair_report_20260614.md",
+      "legacy_context_status": "FAIL",
+      "clean_context_status": "PASS",
+      "clean_smoke_gen_parse_rate": 100.0,
+      "clean_smoke_judge_parse_rate": 100.0,
+      "clean_smoke_hits": 0,
+      "clean_smoke_targets": 3
+    },
     "phase_1": {
       "status": "not_started",
       "description": "Cross-judge diagnostic on existing final ideas"
@@ -26,11 +39,15 @@
     "model_inventory_sjtu_20260614.json",
     "smoke_direct10_glm-51_selfjudge_3t_20260614.json",
     "smoke_report_20260614.md",
+    "smoke_direct10_glm-51_selfjudge_cleanctx_3t_20260614.json",
+    "phase0b_protocol_leakage_repair_report_20260614.md",
     "manifest_20260614.json"
   ],
   "security": {
     "api_key_in_files": false,
     "api_key_printed": false,
-    "target_leakage_in_generation": false
+    "target_leakage_in_generation": false,
+    "legacy_context_leaking": true,
+    "clean_context_leaking": false
   }
 }
