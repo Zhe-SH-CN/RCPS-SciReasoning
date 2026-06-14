@@ -1,0 +1,36 @@
+{
+  "experiment_id": "20260614_cross_model_zhiyuan1",
+  "description": "Cross-model robustness check using SJTU ZhiYuan API",
+  "created": "2026-06-14",
+  "provider": "sjtu",
+  "base_url": "https://models.sjtu.edu.cn/api/v1",
+  "selected_model_id": "glm-5.1",
+  "model_slug": "glm-51",
+  "phases": {
+    "phase_0": {
+      "status": "complete",
+      "model_inventory": "model_inventory_sjtu_20260614.json",
+      "smoke_test": "smoke_direct10_glm-51_selfjudge_3t_20260614.json",
+      "smoke_report": "smoke_report_20260614.md"
+    },
+    "phase_1": {
+      "status": "not_started",
+      "description": "Cross-judge diagnostic on existing final ideas"
+    },
+    "phase_2": {
+      "status": "not_started",
+      "description": "Cross-generator Direct-10 on full 77 targets"
+    }
+  },
+  "files": [
+    "model_inventory_sjtu_20260614.json",
+    "smoke_direct10_glm-51_selfjudge_3t_20260614.json",
+    "smoke_report_20260614.md",
+    "manifest_20260614.json"
+  ],
+  "security": {
+    "api_key_in_files": false,
+    "api_key_printed": false,
+    "target_leakage_in_generation": false
+  }
+}
