@@ -9,6 +9,27 @@ Sci-Reasoning/
 raw/
 *.pdf
 
+# Submission-sensitive paper sources and private drafts.
+# Keep ACML_camera_ready/ tracked as the official public template; do not push
+# local paper drafts, tables, bibliographies, or build products.
+paper/
+research/
+
+# Benchmark records and experiment artifacts may contain target contributions,
+# raw model outputs, judge traces, local paths, or other non-public material.
+data/scireasoning/
+results/
+submission_package/
+
+# Agent-local planning and third-party research workspaces
+task_plan.md
+findings.md
+progress.md
+.planning/
+awesome-ai-auto-research/
+gpt-researcher/
+open_deep_research/
+
 # Raw data (not pushed - regenerate from source)
 data/scireasoning/debug_sample_3.jsonl
 data/scireasoning/manifest.json
