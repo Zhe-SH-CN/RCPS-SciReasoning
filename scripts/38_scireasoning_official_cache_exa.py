@@ -49,6 +49,7 @@ OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
 OPENAI_BASE_URL = os.getenv("OPENAI_BASE_URL", "https://api.openai.com/v1")
 OPENAI_MODEL = os.getenv("OPENAI_MODEL", "")
 MODEL_SLEEP_SECONDS = 0.0
+REQUEST_TIMEOUT_SECONDS = 120.0
 
 
 def sanitize_api_error_text(text):
@@ -260,7 +261,7 @@ def call_openai_api(messages, model=None):
         f"{OPENAI_BASE_URL.rstrip('/')}/chat/completions",
         headers=headers,
         json=data,
-        timeout=120
+        timeout=REQUEST_TIMEOUT_SECONDS
     )
     if MODEL_SLEEP_SECONDS > 0:
         time.sleep(MODEL_SLEEP_SECONDS)
@@ -585,7 +586,7 @@ def evaluate_single_paper(paper_data, paper_idx, k=10):
 
 def main():
     """Main evaluation pipeline"""
-    global EXA_API_KEY, OPENAI_API_KEY, OPENAI_BASE_URL, OPENAI_MODEL, MODEL_SLEEP_SECONDS, CONTEXT_CACHE_PATH, CONTEXT_CACHE_BY_TITLE, CONTEXT_CACHE_SUMMARY, OUTPUT_PATH, exa
+    global EXA_API_KEY, OPENAI_API_KEY, OPENAI_BASE_URL, OPENAI_MODEL, MODEL_SLEEP_SECONDS, REQUEST_TIMEOUT_SECONDS, CONTEXT_CACHE_PATH, CONTEXT_CACHE_BY_TITLE, CONTEXT_CACHE_SUMMARY, OUTPUT_PATH, exa
     parser = argparse.ArgumentParser(description="Research Idea Generation Evaluation v4 (Cached Exa Contexts)")
     parser.add_argument("--data-dir", default=str(DEFAULT_DATA_DIR))
     parser.add_argument("--context-cache", default=str(DEFAULT_CONTEXT_CACHE), help="Sci-Reasoning result JSON containing predecessor_details")
@@ -597,6 +598,8 @@ def main():
     parser.add_argument("--api-key", dest="api_key", default=None, help="OpenAI-compatible API key; overrides OPENAI_API_KEY")
     parser.add_argument("--exa-api-key", dest="exa_api_key", default=None, help="Exa API key; overrides EXA_API_KEY")
     parser.add_argument("--sleep-seconds", type=float, default=0.0, help="Sleep after each model API call")
+    parser.add_argument("--request-timeout", type=float, default=120.0, help="OpenAI-compatible request timeout in seconds")
+    parser.add_argument("--resume", action="store_true", help="Resume from an existing output/interim JSON without changing scoring")
     args = parser.parse_args()
 
     EXA_API_KEY = args.exa_api_key if args.exa_api_key is not None else os.getenv("EXA_API_KEY", "")
@@ -604,6 +607,7 @@ def main():
     OPENAI_BASE_URL = args.base_url if args.base_url is not None else os.getenv("OPENAI_BASE_URL", "https://api.openai.com/v1")
     OPENAI_MODEL = args.model if args.model is not None else os.getenv("OPENAI_MODEL", "")
     MODEL_SLEEP_SECONDS = args.sleep_seconds
+    REQUEST_TIMEOUT_SECONDS = args.request_timeout
     CONTEXT_CACHE_PATH = Path(args.context_cache)
     OUTPUT_PATH = Path(args.output) if args.output else None
     exa = Exa(api_key=EXA_API_KEY) if Exa is not None and EXA_API_KEY else None
@@ -668,19 +672,51 @@ def main():
     results = []
     total_input_tokens = 0
     total_output_tokens = 0
+    completed_titles = set()
+    if args.resume:
+        resume_candidates = []
+        if OUTPUT_PATH:
+            resume_candidates.append(OUTPUT_PATH)
+            resume_candidates.append(OUTPUT_PATH.with_name(f"{OUTPUT_PATH.stem}_interim{OUTPUT_PATH.suffix}"))
+        else:
+            resume_candidates.append(Path("projects/research_idea_evaluation/results/evaluation_results_cache_exa_final.json"))
+            resume_candidates.append(Path("projects/research_idea_evaluation/results/evaluation_results_cache_exa_interim.json"))
+
+        resume_path = next((p for p in resume_candidates if p.exists()), None)
+        if resume_path:
+            with open(resume_path, "r") as f:
+                existing = json.load(f)
+            for record in existing.get("results", []):
+                ideas = record.get("generated_ideas", [])
+                judgments = record.get("judgments", [])
+                complete = (
+                    record.get("paper_title")
+                    and len(ideas) > 0
+                    and len(ideas) == len(judgments)
+                    and "hit_at_k" in record
+                )
+                if complete and record["paper_title"] not in completed_titles:
+                    results.append(record)
+                    completed_titles.add(record["paper_title"])
+                    total_input_tokens += record.get("input_tokens", 0)
+                    total_output_tokens += record.get("output_tokens", 0)
+            print(f"Resuming from {resume_path}: {len(results)} completed targets")
     
     start_time = time.time()
     
     for idx, paper in enumerate(papers):
+        if paper["paper_title"] in completed_titles:
+            continue
         result = evaluate_single_paper(paper, idx, k=10)
         results.append(result)
+        completed_titles.add(paper["paper_title"])
         
         total_input_tokens += result["input_tokens"]
         total_output_tokens += result["output_tokens"]
         
         # Progress update
         hits_so_far = sum(1 for r in results if r["hit_at_k"])
-        print(f"\n    Progress: {idx+1}/{len(papers)} | Hits: {hits_so_far}/{idx+1} ({hits_so_far/(idx+1)*100:.1f}%)")
+        print(f"\n    Progress: {len(results)}/{len(papers)} | Hits: {hits_so_far}/{len(results)} ({hits_so_far/len(results)*100:.1f}%)")
         
         input_cost = (total_input_tokens / 1_000_000) * INPUT_COST_PER_1M
         output_cost = (total_output_tokens / 1_000_000) * OUTPUT_COST_PER_1M
