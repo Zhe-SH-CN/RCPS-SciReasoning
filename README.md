@@ -1,7 +1,8 @@
 # RCPS-SciReasoning
 
-This repository contains code and public-facing scaffolding for a cache-controlled
-Sci-Reasoning Hit@10 study of Risk-Controlled Candidate Portfolio Search (RCPS).
+This repository contains public-facing code and scaffolding for a
+cache-controlled Sci-Reasoning Hit@10 study of Risk-Controlled Candidate
+Portfolio Search (RCPS).
 
 The project studies a fixed-budget scientific ideation setting: a system may
 generate or search over candidate ideas, but the benchmark evaluates only the
@@ -24,9 +25,13 @@ statistical significance.
 
 - `ACML_camera_ready/`: official ACML/JMLR template assets kept for public
   provenance.
-- `scripts/`: experiment, audit, and analysis scripts used during development.
-- `requirements.txt`: minimal Python dependency record for local scripts.
-- `AGENTS.md`, `CLAUDE.md`: agent-operation notes for this workspace.
+- `scripts/`: current experiment, audit, and analysis scripts.
+- `scripts/archive/`: preserved historical scripts from earlier MiMo, PGCR,
+  clean-context, and Sci-Reasoning reset phases.
+- `archive/root_reports/`: historical root-level reports moved out of the root.
+- `requirements.txt`: clean `uv pip freeze` snapshot from the project environment.
+- `AGENTS.md`: public agent-operation notes for this workspace.
+- `CLAUDE.md`: local ignored handoff notes; not part of the public repository.
 
 Several local directories are intentionally excluded from Git because they may
 contain paper drafts, raw benchmark data, target contributions, model outputs,
@@ -41,6 +46,10 @@ logs, private planning notes, or provider credentials:
 - `logs/`
 - `.env`
 - `*.zip`
+
+Private local archives also exist under ignored directories such as
+`Plan/archive/` and `paper/archive/`. They preserve history for rebuttal and
+handoff, but are not public release artifacts.
 
 ## Public Artifact Boundary
 
@@ -57,12 +66,27 @@ Do not commit:
 - private planning files,
 - paper source or generated PDFs unless a deliberate release decision is made.
 
+## Environment
+
+The local Python environment can be recreated with:
+
+```bash
+UV_CACHE_DIR=.uv-cache uv venv .venv
+UV_CACHE_DIR=.uv-cache uv pip install -r requirements.txt
+```
+
+After setup, run scripts with `.venv/bin/python`.
+
 ## Reproduction Notes
 
 The experiments depend on provider endpoints and public Sci-Reasoning repository
 artifacts. A bit-for-bit rerun requires the same provider APIs, model aliases,
 and cache files. For review-facing reproduction, use sanitized aggregate tables,
 audits, and scripts from the local supplementary package rather than raw logs.
+
+Current paper-facing scripts are the root-level `scripts/38` through
+`scripts/45` chain. Archived scripts are retained for traceability only and
+should not be used for current claims without a fresh audit.
 
 ## Submission Checklist
 
@@ -75,4 +99,3 @@ Before any public release or submission update:
    model outputs, or private planning notes.
 4. Keep historical drafts and negative-result explorations out of the submitted
    paper unless explicitly reintroduced and audited.
-
