@@ -84,9 +84,7 @@ scripts/_method_monitor.sh
 scripts/archive/final_run_wrappers/
 scripts/archive/generated/
 
-archive/*
-!archive/root_reports/
-!archive/root_reports/*.md
+archive/
 
 CLAUDE.md
 conversations/
