@@ -21,6 +21,29 @@ cache, final budget, parser, and binary judge. The work does not claim exact
 live-Exa reproduction, SOTA performance, human-confirmed scientific novelty, or
 statistical significance.
 
+## Citation
+
+If you use this repository in academic work, please cite it as:
+
+```bibtex
+@misc{rcps_scireasoning_2026,
+  title        = {{RCPS-SciReasoning}: Risk-Controlled Candidate Portfolio Search for Sci-Reasoning Hit@10},
+  author       = {{RCPS-SciReasoning Contributors}},
+  year         = {2026},
+  howpublished = {\url{https://github.com/Zhe-SH-CN/RCPS-SciReasoning}},
+  note         = {Research code for a cache-controlled Sci-Reasoning Hit@10 study}
+}
+```
+
+If a formal paper citation becomes available, prefer the paper citation and use
+the repository citation for code or artifact references.
+
+## Intended Use
+
+This repository is provided for educational and academic research purposes only.
+It is not intended for production scientific-discovery deployment, automated
+paper generation, or unsupervised decision-making about scientific merit.
+
 ## Repository Layout
 
 - `ACML_camera_ready/`: official ACML/JMLR template assets kept for public
@@ -28,7 +51,6 @@ statistical significance.
 - `scripts/`: current experiment, audit, and analysis scripts.
 - `scripts/archive/`: preserved historical scripts from earlier MiMo, PGCR,
   clean-context, and Sci-Reasoning reset phases.
-- `archive/root_reports/`: historical root-level reports moved out of the root.
 - `requirements.txt`: clean `uv pip freeze` snapshot from the project environment.
 - `AGENTS.md`: public agent-operation notes for this workspace.
 - `CLAUDE.md`: local ignored handoff notes; not part of the public repository.
@@ -44,12 +66,14 @@ logs, private planning notes, or provider credentials:
 - `supplement/`
 - `literature/`
 - `logs/`
+- `archive/`
+- `wiki/`
 - `.env`
 - `*.zip`
 
 Private local archives also exist under ignored directories such as
-`Plan/archive/` and `paper/archive/`. They preserve history for rebuttal and
-handoff, but are not public release artifacts.
+`archive/`, `Plan/archive/`, `paper/archive/`, and `wiki/`. They preserve
+history for rebuttal and handoff, but are not public release artifacts.
 
 ## Public Artifact Boundary
 
