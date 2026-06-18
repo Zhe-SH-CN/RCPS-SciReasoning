@@ -57,6 +57,7 @@ logs/
 # Caches
 .cache/
 *.DS_Store
+*.zip
 
 # Secrets
 .env
@@ -77,3 +78,5 @@ paper/*.fls
 paper/*.fdb_latexmk
 
 literature/
+scripts/_monitor_methods.sh
+scripts/_method_monitor.sh
