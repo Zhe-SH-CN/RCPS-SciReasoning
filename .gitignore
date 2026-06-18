@@ -89,3 +89,4 @@ archive/*
 !archive/root_reports/*.md
 
 CLAUDE.md
+conversations/
